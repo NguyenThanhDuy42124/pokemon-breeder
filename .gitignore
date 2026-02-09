@@ -5,7 +5,7 @@ venv/
 !**/.env.development
 !**/.env.production
 node_modules/
-frontend/build/
+# frontend/build/ — included in git for Python-only hosting (no Node.js on server)
 *.egg-info/
 dist/
 .idea/
