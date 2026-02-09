@@ -349,6 +349,7 @@ def breeding_calculate(req: BreedingRequest, db: Session = Depends(get_db)):
         parent_b_ability_hidden=req.parent_b_ability_hidden,
         breeding_with_ditto=req.breeding_with_ditto,
         target_ivs=req.target_ivs,
+        lang=req.lang,
     )
 
     return result

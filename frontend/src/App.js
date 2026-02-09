@@ -55,6 +55,7 @@ function App() {
         parent_b_ability_hidden: parentB.abilityHidden,
         breeding_with_ditto: parentA.pokemonId === 132 || parentB.pokemonId === 132,
         target_ivs: targetIvs,
+        lang: lang,
       };
       const data = await calculateBreeding(payload);
       setResults(data);
@@ -128,6 +129,9 @@ function App() {
       {/* Footer */}
       <footer className="app-footer">
         <p>{t("footer")}</p>
+        <p className="footer-credits">
+          Made by <strong>@DaoTacVoSi</strong> | GitHub: <a href="https://github.com/NguyenThanhDuy42124" target="_blank" rel="noopener noreferrer">NguyenThanhDuy42124</a>
+        </p>
       </footer>
     </div>
   );

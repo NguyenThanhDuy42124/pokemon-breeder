@@ -721,6 +721,21 @@
   margin-top: 2rem;
 }
 
+.footer-credits {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.footer-credits a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.footer-credits a:hover {
+  text-decoration: underline;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .parents-row {

@@ -65,6 +65,7 @@ def calculate_nature_inheritance(
     held_item_b: str,
     parent_a_nature: str | None,
     parent_b_nature: str | None,
+    lang: str = "en",
 ) -> NatureInheritance:
     """
     Calculate how nature is passed to offspring.
@@ -74,54 +75,84 @@ def calculate_nature_inheritance(
     - Everstone on BOTH: 50% chance of either parent's nature.
     - No Everstone: random from 25 natures (4% each).
     """
+    vi = lang == "vi"
     a_everstone = held_item_a == "everstone"
     b_everstone = held_item_b == "everstone"
 
     if a_everstone and b_everstone:
         # Both hold Everstone: 50/50 random pick
+        if vi:
+            expl = (
+                f"Cả hai bố mẹ đều giữ Đá Bất Biến. "
+                f"50% cơ hội tính cách của Bố/Mẹ A ({parent_a_nature or '?'}), "
+                f"50% cơ hội tính cách của Bố/Mẹ B ({parent_b_nature or '?'})."
+            )
+        else:
+            expl = (
+                f"Both parents hold Everstone. "
+                f"50% chance of Parent A's nature ({parent_a_nature or '?'}), "
+                f"50% chance of Parent B's nature ({parent_b_nature or '?'})."
+            )
         return NatureInheritance(
             inherited_nature=f"{parent_a_nature or '?'} or {parent_b_nature or '?'}",
             from_parent="A or B (50/50)",
             probability=0.5,
             method="everstone_both",
-            explanation=(
-                f"Both parents hold Everstone. "
-                f"50% chance of Parent A's nature ({parent_a_nature or '?'}), "
-                f"50% chance of Parent B's nature ({parent_b_nature or '?'})."
-            ),
+            explanation=expl,
         )
     elif a_everstone:
+        if vi:
+            expl = (
+                f"Bố/Mẹ A giữ Đá Bất Biến. "
+                f"Con chắc chắn có tính cách {parent_a_nature or '?'}."
+            )
+        else:
+            expl = (
+                f"Parent A holds Everstone. "
+                f"Offspring is guaranteed to have {parent_a_nature or '?'} nature."
+            )
         return NatureInheritance(
             inherited_nature=parent_a_nature,
             from_parent="A",
             probability=1.0,
             method="everstone",
-            explanation=(
-                f"Parent A holds Everstone. "
-                f"Offspring is guaranteed to have {parent_a_nature or '?'} nature."
-            ),
+            explanation=expl,
         )
     elif b_everstone:
+        if vi:
+            expl = (
+                f"Bố/Mẹ B giữ Đá Bất Biến. "
+                f"Con chắc chắn có tính cách {parent_b_nature or '?'}."
+            )
+        else:
+            expl = (
+                f"Parent B holds Everstone. "
+                f"Offspring is guaranteed to have {parent_b_nature or '?'} nature."
+            )
         return NatureInheritance(
             inherited_nature=parent_b_nature,
             from_parent="B",
             probability=1.0,
             method="everstone",
-            explanation=(
-                f"Parent B holds Everstone. "
-                f"Offspring is guaranteed to have {parent_b_nature or '?'} nature."
-            ),
+            explanation=expl,
         )
     else:
+        if vi:
+            expl = (
+                "Không có Đá Bất Biến. "
+                "Tính cách được chọn ngẫu nhiên từ 25 loại (mỗi loại 4%)."
+            )
+        else:
+            expl = (
+                "No Everstone held. "
+                "Nature is randomly chosen from 25 natures (4% each)."
+            )
         return NatureInheritance(
             inherited_nature=None,
             from_parent=None,
             probability=1.0 / 25.0,
             method="random",
-            explanation=(
-                "No Everstone held. "
-                "Nature is randomly chosen from 25 natures (4% each)."
-            ),
+            explanation=expl,
         )
 
 
@@ -135,6 +166,7 @@ def calculate_ability_inheritance(
     parent_a_ability_hidden: bool,
     parent_b_ability_hidden: bool,
     breeding_with_ditto: bool,
+    lang: str = "en",
 ) -> AbilityInheritance:
     """
     Calculate how ability is inherited by offspring.
@@ -145,61 +177,90 @@ def calculate_ability_inheritance(
     - If the passing parent has a Hidden Ability: 60% HA, 20% normal slot 1, 20% normal slot 2.
     - If the passing parent has a normal ability: 80% same ability, 20% other slot.
     """
+    vi = lang == "vi"
     if breeding_with_ditto:
-        # Non-Ditto parent determines ability
-        # We assume Parent A is the non-Ditto (frontend should enforce this)
         ability = parent_a_ability
         is_hidden = parent_a_ability_hidden
 
         if is_hidden:
+            if vi:
+                expl = (
+                    f"Lai với Ditto. Bố/Mẹ không phải Ditto có Đặc tính ẩn ({ability or '?'}). "
+                    f"60% cơ hội con nhận Đặc tính ẩn, "
+                    f"40% cơ hội con nhận đặc tính thường."
+                )
+            else:
+                expl = (
+                    f"Breeding with Ditto. Non-Ditto parent has Hidden Ability ({ability or '?'}). "
+                    f"60% chance offspring gets Hidden Ability, "
+                    f"40% chance offspring gets a regular ability."
+                )
             return AbilityInheritance(
                 ability_name=ability,
                 is_hidden=True,
                 probability=0.6,
-                explanation=(
-                    f"Breeding with Ditto. Non-Ditto parent has Hidden Ability ({ability or '?'}). "
-                    f"60% chance offspring gets Hidden Ability, "
-                    f"40% chance offspring gets a regular ability."
-                ),
+                explanation=expl,
             )
         else:
+            if vi:
+                expl = (
+                    f"Lai với Ditto. Bố/Mẹ không phải Ditto có đặc tính thường ({ability or '?'}). "
+                    f"60% cơ hội con nhận cùng đặc tính, "
+                    f"40% cơ hội con nhận đặc tính thường còn lại."
+                )
+            else:
+                expl = (
+                    f"Breeding with Ditto. Non-Ditto parent has regular ability ({ability or '?'}). "
+                    f"60% chance offspring gets the same ability, "
+                    f"40% chance offspring gets the other regular ability slot."
+                )
             return AbilityInheritance(
                 ability_name=ability,
                 is_hidden=False,
                 probability=0.6,
-                explanation=(
-                    f"Breeding with Ditto. Non-Ditto parent has regular ability ({ability or '?'}). "
-                    f"60% chance offspring gets the same ability, "
-                    f"40% chance offspring gets the other regular ability slot."
-                ),
+                explanation=expl,
             )
     else:
-        # Normal breeding: female parent passes
-        # We assume Parent A is female (frontend should handle)
         ability = parent_a_ability
         is_hidden = parent_a_ability_hidden
 
         if is_hidden:
+            if vi:
+                expl = (
+                    f"Bố/Mẹ cái có Đặc tính ẩn ({ability or '?'}). "
+                    f"60% cơ hội con nhận Đặc tính ẩn. "
+                    f"20% cơ hội cho mỗi đặc tính thường."
+                )
+            else:
+                expl = (
+                    f"Female parent has Hidden Ability ({ability or '?'}). "
+                    f"60% chance offspring gets Hidden Ability. "
+                    f"20% chance for each regular ability slot."
+                )
             return AbilityInheritance(
                 ability_name=ability,
                 is_hidden=True,
                 probability=0.6,
-                explanation=(
-                    f"Female parent has Hidden Ability ({ability or '?'}). "
-                    f"60% chance offspring gets Hidden Ability. "
-                    f"20% chance for each regular ability slot."
-                ),
+                explanation=expl,
             )
         else:
+            if vi:
+                expl = (
+                    f"Bố/Mẹ cái có đặc tính thường ({ability or '?'}). "
+                    f"80% cơ hội con nhận cùng đặc tính. "
+                    f"20% cơ hội con nhận đặc tính thường còn lại."
+                )
+            else:
+                expl = (
+                    f"Female parent has regular ability ({ability or '?'}). "
+                    f"80% chance offspring gets the same ability. "
+                    f"20% chance offspring gets the other regular ability."
+                )
             return AbilityInheritance(
                 ability_name=ability,
                 is_hidden=False,
                 probability=0.8,
-                explanation=(
-                    f"Female parent has regular ability ({ability or '?'}). "
-                    f"80% chance offspring gets the same ability. "
-                    f"20% chance offspring gets the other regular ability."
-                ),
+                explanation=expl,
             )
 
 
@@ -222,6 +283,7 @@ def calculate_breeding(
     parent_b_ability_hidden: bool = False,
     breeding_with_ditto: bool = False,
     target_ivs: list[bool] | None = None,
+    lang: str = "en",
 ) -> BreedingResponse:
     """
     Main entry point called by the API.
@@ -349,7 +411,7 @@ def calculate_breeding(
 
         explanation = _build_explanation(
             k, prob, parent_a_ivs, parent_b_ivs,
-            has_destiny_knot, forced_stats, base_inherited,
+            has_destiny_knot, forced_stats, base_inherited, lang,
         )
 
         result_entries.append(BreedingResultEntry(
@@ -362,14 +424,14 @@ def calculate_breeding(
     # ── Step 8: Nature inheritance ──
     nature_info = calculate_nature_inheritance(
         held_item_a, held_item_b,
-        parent_a_nature, parent_b_nature,
+        parent_a_nature, parent_b_nature, lang,
     )
 
     # ── Step 9: Ability inheritance ──
     ability_info = calculate_ability_inheritance(
         parent_a_ability, parent_b_ability,
         parent_a_ability_hidden, parent_b_ability_hidden,
-        breeding_with_ditto,
+        breeding_with_ditto, lang,
     )
 
     # ── Step 10: Target IV probability (exact spread) ──
@@ -388,6 +450,7 @@ def calculate_breeding(
             total_combos=total_combos,
             has_destiny_knot=has_destiny_knot,
             base_inherited=base_inherited,
+            lang=lang,
         )
 
     return BreedingResponse(
@@ -416,6 +479,7 @@ def _calculate_target_ivs(
     total_combos: int,
     has_destiny_knot: bool,
     base_inherited: int,
+    lang: str = "en",
 ) -> TargetIvResult:
     """
     Calculate the probability of getting the EXACT target IV spread.
@@ -426,6 +490,7 @@ def _calculate_target_ivs(
     Example: target_ivs = [T,T,T,T,T,F] means we want HP,Atk,Def,SpA,SpD = 31
     and we don't care about Spe.
     """
+    vi = lang == "vi"
     target_indices = [i for i in range(6) if target_ivs[i]]
     target_count = len(target_indices)
     target_stat_names = [STATS[i] for i in target_indices]
@@ -458,34 +523,60 @@ def _calculate_target_ivs(
     eggs = max(1, round(1.0 / prob_total)) if prob_total > 0 else 0
 
     lines = []
-    lines.append(f"Target: {', '.join(target_stat_names)} = 31 ({target_count} stats).")
+    if vi:
+        lines.append(f"Mục tiêu: {', '.join(target_stat_names)} = 31 ({target_count} chỉ số).")
+    else:
+        lines.append(f"Target: {', '.join(target_stat_names)} = 31 ({target_count} stats).")
 
     a_match = sum(1 for i in target_indices if parent_a_ivs[i])
     b_match = sum(1 for i in target_indices if parent_b_ivs[i])
     both_match = sum(1 for i in target_indices if parent_a_ivs[i] and parent_b_ivs[i])
 
-    lines.append(f"Parent A covers {a_match}/{target_count} target stats.")
-    lines.append(f"Parent B covers {b_match}/{target_count} target stats.")
-    lines.append(f"Both parents cover {both_match}/{target_count} target stats (100% if inherited).")
+    if vi:
+        lines.append(f"Bố/Mẹ A đáp ứng {a_match}/{target_count} chỉ số mục tiêu.")
+        lines.append(f"Bố/Mẹ B đáp ứng {b_match}/{target_count} chỉ số mục tiêu.")
+        lines.append(f"Cả hai bố mẹ đáp ứng {both_match}/{target_count} chỉ số (100% nếu được di truyền).")
+    else:
+        lines.append(f"Parent A covers {a_match}/{target_count} target stats.")
+        lines.append(f"Parent B covers {b_match}/{target_count} target stats.")
+        lines.append(f"Both parents cover {both_match}/{target_count} target stats (100% if inherited).")
 
     if has_destiny_knot:
-        lines.append(f"Destiny Knot: 5 of 6 IVs inherited.")
+        if vi:
+            lines.append(f"Dây Chỉ Đỏ: 5 trong 6 IVs được di truyền.")
+        else:
+            lines.append(f"Destiny Knot: 5 of 6 IVs inherited.")
     else:
-        lines.append(f"No Destiny Knot: only 3 of 6 IVs inherited.")
+        if vi:
+            lines.append(f"Không có Dây Chỉ Đỏ: chỉ 3 trong 6 IVs được di truyền.")
+        else:
+            lines.append(f"No Destiny Knot: only 3 of 6 IVs inherited.")
 
     if forced_stats:
         forced_names = [STATS[i] for i in sorted(forced_stats)]
-        lines.append(f"Power Item forces: {', '.join(forced_names)}.")
+        if vi:
+            lines.append(f"Vật phẩm Sức Mạnh ép: {', '.join(forced_names)}.")
+        else:
+            lines.append(f"Power Item forces: {', '.join(forced_names)}.")
 
     non_target = [STATS[i] for i in range(6) if not target_ivs[i]]
     if non_target:
-        lines.append(f"Don't care about: {', '.join(non_target)}.")
+        if vi:
+            lines.append(f"Không quan tâm: {', '.join(non_target)}.")
+        else:
+            lines.append(f"Don't care about: {', '.join(non_target)}.")
 
     lines.append("")
     if prob_total > 0:
-        lines.append(f"Probability: {pct:.4f}% (about 1 in {eggs} eggs).")
+        if vi:
+            lines.append(f"Xác suất: {pct:.4f}% (khoảng 1 trong {eggs} trứng).")
+        else:
+            lines.append(f"Probability: {pct:.4f}% (about 1 in {eggs} eggs).")
     else:
-        lines.append(f"Probability: 0% -- impossible with these parents and items.")
+        if vi:
+            lines.append(f"Xác suất: 0% -- không thể với bố mẹ và vật phẩm hiện tại.")
+        else:
+            lines.append(f"Probability: 0% -- impossible with these parents and items.")
 
     return TargetIvResult(
         target_ivs=target_ivs,
@@ -506,36 +597,61 @@ def _build_explanation(
     has_destiny_knot: bool,
     forced_stats: set,
     inherited_count: int,
+    lang: str = "en",
 ) -> str:
     """
     Build a human-readable explanation of how this probability was calculated.
     This is shown in the modal when the user clicks a percentage.
     """
+    vi = lang == "vi"
     a_perfect = sum(parent_a_ivs)
     b_perfect = sum(parent_b_ivs)
     both_perfect = sum(1 for i in range(6) if parent_a_ivs[i] and parent_b_ivs[i])
 
     lines = []
-    lines.append(f"Target: {perfect_count} perfect IVs out of 6.")
-    lines.append(f"Parent A has {a_perfect} perfect IVs, Parent B has {b_perfect} perfect IVs.")
-    lines.append(f"Stats where BOTH parents are perfect: {both_perfect} (100% if inherited).")
+    if vi:
+        lines.append(f"Mục tiêu: {perfect_count} IVs hoàn hảo trong 6.")
+        lines.append(f"Bố/Mẹ A có {a_perfect} IVs hoàn hảo, Bố/Mẹ B có {b_perfect} IVs hoàn hảo.")
+        lines.append(f"Chỉ số mà CẢ HAI bố mẹ đều hoàn hảo: {both_perfect} (100% nếu được di truyền).")
+    else:
+        lines.append(f"Target: {perfect_count} perfect IVs out of 6.")
+        lines.append(f"Parent A has {a_perfect} perfect IVs, Parent B has {b_perfect} perfect IVs.")
+        lines.append(f"Stats where BOTH parents are perfect: {both_perfect} (100% if inherited).")
 
     if has_destiny_knot:
-        lines.append(f"Destiny Knot: 5 of 6 IVs inherited (instead of 3).")
+        if vi:
+            lines.append(f"Dây Chỉ Đỏ: 5 trong 6 IVs được di truyền (thay vì 3).")
+        else:
+            lines.append(f"Destiny Knot: 5 of 6 IVs inherited (instead of 3).")
     else:
-        lines.append(f"No Destiny Knot: only 3 of 6 IVs inherited.")
+        if vi:
+            lines.append(f"Không có Dây Chỉ Đỏ: chỉ 3 trong 6 IVs được di truyền.")
+        else:
+            lines.append(f"No Destiny Knot: only 3 of 6 IVs inherited.")
 
     if forced_stats:
         forced_names = [STATS[i] for i in sorted(forced_stats)]
-        lines.append(f"Power Item forces: {', '.join(forced_names)} always inherited.")
+        if vi:
+            lines.append(f"Vật phẩm Sức Mạnh ép: {', '.join(forced_names)} luôn được di truyền.")
+        else:
+            lines.append(f"Power Item forces: {', '.join(forced_names)} always inherited.")
 
-    lines.append(f"Non-inherited stats: each has 1/32 (3.125%) chance of being 31.")
+    if vi:
+        lines.append(f"Chỉ số không di truyền: mỗi chỉ số có 1/32 (3.125%) cơ hội đạt 31.")
+    else:
+        lines.append(f"Non-inherited stats: each has 1/32 (3.125%) chance of being 31.")
     lines.append(f"")
 
     if probability > 0:
         odds = 1.0 / probability if probability > 0 else float("inf")
-        lines.append(f"Probability: {probability*100:.4f}% (about 1 in {odds:.0f} eggs).")
+        if vi:
+            lines.append(f"Xác suất: {probability*100:.4f}% (khoảng 1 trong {odds:.0f} trứng).")
+        else:
+            lines.append(f"Probability: {probability*100:.4f}% (about 1 in {odds:.0f} eggs).")
     else:
-        lines.append(f"Probability: 0% -- impossible with these parents and items.")
+        if vi:
+            lines.append(f"Xác suất: 0% -- không thể với bố mẹ và vật phẩm hiện tại.")
+        else:
+            lines.append(f"Probability: 0% -- impossible with these parents and items.")
 
     return "\n".join(lines)

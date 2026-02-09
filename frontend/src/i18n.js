@@ -81,7 +81,7 @@ const translations = {
     calcFailed: "Calculation failed.",
 
     // Footer
-    footer: "Data sourced from PokeAPI. Math uses exact combinatorics (no RNG).",
+    footer: "Data sourced from PokéAPI. Math uses exact combinatorics (no RNG).",
 
     // Language toggle
     langToggle: "Tieng Viet",
