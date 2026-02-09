@@ -1,0 +1,174 @@
+import React, { useState, useEffect } from "react";
+import PokemonSearch from "./PokemonSearch";
+import { getPokemonDetails } from "../api";
+import { useLanguage } from "../i18n";
+
+const STAT_NAMES = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"];
+
+/**
+ * ParentPanel — One parent's config: Pokemon search, IVs, held item, nature, ability.
+ *
+ * Props:
+ *   label          — "Parent A" or "Parent B" (already translated)
+ *   value          — { pokemonId, ivs, heldItem, nature, ability, abilityHidden }
+ *   onChange(val)   — state updater
+ *   natures        — array of { id, name, increased_stat, decreased_stat }
+ */
+export default function ParentPanel({ label, value, onChange, natures }) {
+  const { t } = useLanguage();
+  const [details, setDetails] = useState(null);
+
+  const HELD_ITEMS = [
+    { value: "none", label: t("itemNone") },
+    { value: "destiny_knot", label: t("itemDestinyKnot") },
+    { value: "everstone", label: t("itemEverstone") },
+    { value: "power_hp", label: t("itemPowerHp") },
+    { value: "power_atk", label: t("itemPowerAtk") },
+    { value: "power_def", label: t("itemPowerDef") },
+    { value: "power_spa", label: t("itemPowerSpa") },
+    { value: "power_spd", label: t("itemPowerSpd") },
+    { value: "power_spe", label: t("itemPowerSpe") },
+  ];
+
+  // Fetch full details when pokemon changes
+  useEffect(() => {
+    if (!value.pokemonId) {
+      setDetails(null);
+      return;
+    }
+    let cancelled = false;
+    getPokemonDetails(value.pokemonId).then((d) => {
+      if (!cancelled) setDetails(d);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [value.pokemonId]);
+
+  function update(patch) {
+    onChange({ ...value, ...patch });
+  }
+
+  function handlePokemonSelect(pokemon) {
+    update({
+      pokemonId: pokemon.id,
+      nature: null,
+      ability: null,
+      abilityHidden: false,
+    });
+  }
+
+  function toggleIv(index) {
+    const newIvs = [...value.ivs];
+    newIvs[index] = !newIvs[index];
+    update({ ivs: newIvs });
+  }
+
+  function setAllIvs(val) {
+    update({ ivs: [val, val, val, val, val, val] });
+  }
+
+  return (
+    <div className="parent-panel">
+      <h3 className="parent-label">{label}</h3>
+
+      {/* Pokemon search */}
+      <PokemonSearch
+        onSelect={handlePokemonSelect}
+        placeholder={t("searchParent", { label })}
+      />
+
+      {/* Selected pokemon preview */}
+      {details && (
+        <div className="pokemon-preview">
+          {details.sprite_url && (
+            <img src={details.sprite_url} alt={details.name} className="preview-sprite" />
+          )}
+          <div className="preview-info">
+            <strong>#{details.id} {details.name}</strong>
+            <span className="preview-egg-groups">
+              {t("eggGroups")}: {details.egg_groups.map((g) => g.name).join(", ")}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* IV checkboxes */}
+      <div className="iv-section">
+        <div className="iv-header">
+          <span>{t("perfectIvs")}</span>
+          <div className="iv-quick-btns">
+            <button type="button" onClick={() => setAllIvs(true)} className="btn-mini">{t("all")}</button>
+            <button type="button" onClick={() => setAllIvs(false)} className="btn-mini">{t("none")}</button>
+          </div>
+        </div>
+        <div className="iv-grid">
+          {STAT_NAMES.map((stat, i) => (
+            <label key={stat} className={`iv-checkbox ${value.ivs[i] ? "checked" : ""}`}>
+              <input
+                type="checkbox"
+                checked={value.ivs[i]}
+                onChange={() => toggleIv(i)}
+              />
+              <span className="iv-label">{stat}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Held Item */}
+      <div className="field">
+        <label>{t("heldItem")}</label>
+        <select
+          value={value.heldItem}
+          onChange={(e) => update({ heldItem: e.target.value })}
+        >
+          {HELD_ITEMS.map((item) => (
+            <option key={item.value} value={item.value}>{item.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Nature (only relevant if Everstone is held by this parent) */}
+      <div className="field">
+        <label>{t("nature")} {value.heldItem === "everstone" && <span className="badge">{t("everstoneActive")}</span>}</label>
+        <select
+          value={value.nature || ""}
+          onChange={(e) => update({ nature: e.target.value || null })}
+        >
+          <option value="">{t("selectNature")}</option>
+          {natures.map((n) => (
+            <option key={n.id} value={n.name}>
+              {n.name}
+              {n.increased_stat && n.decreased_stat
+                ? ` (+${n.increased_stat} / -${n.decreased_stat})`
+                : ` (${t("neutral")})`}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Ability */}
+      {details && details.abilities && details.abilities.length > 0 && (
+        <div className="field">
+          <label>{t("ability")}</label>
+          <select
+            value={value.ability || ""}
+            onChange={(e) => {
+              const sel = details.abilities.find((a) => a.name === e.target.value);
+              update({
+                ability: e.target.value || null,
+                abilityHidden: sel ? sel.is_hidden : false,
+              });
+            }}
+          >
+            <option value="">{t("selectAbility")}</option>
+            {details.abilities.map((a) => (
+              <option key={a.name} value={a.name}>
+                {a.name} {a.is_hidden ? `(${t("hiddenAbility")})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
+  );
+}
