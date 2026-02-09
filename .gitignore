@@ -1,7 +1,9 @@
 __pycache__/
 *.py[cod]
 venv/
-.env
+**/.env
+!**/.env.development
+!**/.env.production
 node_modules/
 frontend/build/
 *.egg-info/
