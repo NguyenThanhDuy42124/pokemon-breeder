@@ -240,6 +240,17 @@
   margin-top: 0.2rem;
 }
 
+.not-found-preview {
+  border: 1px dashed var(--accent);
+  justify-content: center;
+}
+
+.not-found-text {
+  color: var(--accent);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
 /* ── IV Section ── */
 .iv-section {
   margin-bottom: 0.8rem;

@@ -17,6 +17,7 @@ const STAT_NAMES = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"];
 export default function ParentPanel({ label, value, onChange, natures }) {
   const { t } = useLanguage();
   const [details, setDetails] = useState(null);
+  const [notFoundQuery, setNotFoundQuery] = useState(null);
 
   const HELD_ITEMS = [
     { value: "none", label: t("itemNone") },
@@ -48,12 +49,23 @@ export default function ParentPanel({ label, value, onChange, natures }) {
   }
 
   function handlePokemonSelect(pokemon) {
+    setNotFoundQuery(null);
     update({
       pokemonId: pokemon.id,
       nature: null,
       ability: null,
       abilityHidden: false,
     });
+  }
+
+  function handleNotFound(query) {
+    if (query === null) {
+      setNotFoundQuery(null);
+    } else {
+      setNotFoundQuery(query);
+      setDetails(null);
+      update({ pokemonId: null, nature: null, ability: null, abilityHidden: false });
+    }
   }
 
   function toggleIv(index) {
@@ -73,6 +85,7 @@ export default function ParentPanel({ label, value, onChange, natures }) {
       {/* Pokemon search */}
       <PokemonSearch
         onSelect={handlePokemonSelect}
+        onNotFound={handleNotFound}
         placeholder={t("searchParent", { label })}
       />
 
@@ -87,6 +100,15 @@ export default function ParentPanel({ label, value, onChange, natures }) {
             <span className="preview-egg-groups">
               {t("eggGroups")}: {details.egg_groups.map((g) => g.name).join(", ")}
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* Not found preview */}
+      {notFoundQuery && !details && (
+        <div className="pokemon-preview not-found-preview">
+          <div className="preview-info">
+            <span className="not-found-text">{t("pokemonNotFound", { query: notFoundQuery })}</span>
           </div>
         </div>
       )}

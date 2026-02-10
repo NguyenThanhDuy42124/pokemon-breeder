@@ -9,7 +9,7 @@ import { useLanguage } from "../i18n";
  *   onSelect(pokemon)  — called when user picks a result { id, name, sprite_url }
  *   placeholder        — input placeholder text
  */
-export default function PokemonSearch({ onSelect, placeholder = "Search Pokemon..." }) {
+export default function PokemonSearch({ onSelect, onNotFound, placeholder = "Search Pokemon..." }) {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -56,14 +56,27 @@ export default function PokemonSearch({ onSelect, placeholder = "Search Pokemon.
     onSelect(pokemon);
   }
 
+  function handleKeyDown(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      setOpen(false);
+      if (results.length === 0 && query.length >= 2 && onNotFound) {
+        onNotFound(query);
+      } else if (results.length === 1) {
+        pick(results[0]);
+      }
+    }
+  }
+
   return (
     <div className="search-wrapper" ref={wrapperRef}>
       <input
         type="text"
         className="search-input"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => { setQuery(e.target.value); if (onNotFound) onNotFound(null); }}
         onFocus={() => results.length > 0 && setOpen(true)}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoComplete="off"
       />
