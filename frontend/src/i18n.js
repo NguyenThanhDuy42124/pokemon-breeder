@@ -93,6 +93,7 @@ const translations = {
     targetStats: "Target stats",
     targetExact: "Exact match probability",
     vsGeneral: "vs. General {count}/6",
+    pokemonNotFound: "No Pokémon found for \"{query}\"",
   },
 
   vi: {
@@ -174,6 +175,7 @@ const translations = {
     targetStats: "Chỉ số mục tiêu",
     targetExact: "Xác suất chính xác",
     vsGeneral: "so với {count}/6 chung",
+    pokemonNotFound: "Không tìm thấy Pokémon \"{query}\"",
   },
 };
 

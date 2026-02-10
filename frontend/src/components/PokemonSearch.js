@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { searchPokemon } from "../api";
+import { useLanguage } from "../i18n";
 
 /**
  * PokemonSearch — Debounced autocomplete search input.
@@ -9,10 +10,12 @@ import { searchPokemon } from "../api";
  *   placeholder        — input placeholder text
  */
 export default function PokemonSearch({ onSelect, placeholder = "Search Pokemon..." }) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
   const wrapperRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -32,6 +35,7 @@ export default function PokemonSearch({ onSelect, placeholder = "Search Pokemon.
     if (query.length < 2) {
       setResults([]);
       setOpen(false);
+      setSearched(false);
       return;
     }
     setLoading(true);
@@ -39,7 +43,8 @@ export default function PokemonSearch({ onSelect, placeholder = "Search Pokemon.
     timerRef.current = setTimeout(async () => {
       const data = await searchPokemon(query);
       setResults(data);
-      setOpen(data.length > 0);
+      setSearched(true);
+      setOpen(true);
       setLoading(false);
     }, 300);
     return () => clearTimeout(timerRef.current);
@@ -65,16 +70,22 @@ export default function PokemonSearch({ onSelect, placeholder = "Search Pokemon.
       {loading && <span className="search-spinner">...</span>}
       {open && (
         <ul className="search-dropdown">
-          {results.map((p) => (
-            <li key={p.id} onClick={() => pick(p)} className="search-item">
-              {p.sprite_url && (
-                <img src={p.sprite_url} alt={p.name} className="search-sprite" />
-              )}
-              <span className="search-name">
-                #{p.id} {p.name}
-              </span>
+          {results.length === 0 && searched ? (
+            <li className="search-item search-not-found">
+              <span className="search-name">{t("pokemonNotFound", { query })}</span>
             </li>
-          ))}
+          ) : (
+            results.map((p) => (
+              <li key={p.id} onClick={() => pick(p)} className="search-item">
+                {p.sprite_url && (
+                  <img src={p.sprite_url} alt={p.name} className="search-sprite" />
+                )}
+                <span className="search-name">
+                  #{p.id} {p.name}
+                </span>
+              </li>
+            ))
+          )}
         </ul>
       )}
     </div>

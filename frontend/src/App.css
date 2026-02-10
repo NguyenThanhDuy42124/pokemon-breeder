@@ -188,6 +188,17 @@
   background: var(--surface2);
 }
 
+.search-not-found {
+  color: var(--text-muted);
+  font-style: italic;
+  cursor: default;
+  padding: 0.6rem;
+}
+
+.search-not-found:hover {
+  background: transparent;
+}
+
 .search-sprite {
   width: 32px;
   height: 32px;
