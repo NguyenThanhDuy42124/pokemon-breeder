@@ -127,6 +127,7 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
               {t("eggGroups")}: {details.egg_groups.map((g) => g.name).join(", ")}
             </span>
           </div>
+          <button className="btn-preview-clear" onClick={handleClear} title={t("clear")} type="button">✕</button>
         </div>
       )}
 
