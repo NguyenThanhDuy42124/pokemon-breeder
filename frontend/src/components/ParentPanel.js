@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PokemonSearch from "./PokemonSearch";
+import AdvancedSearchPanel from "./AdvancedSearchPanel";
 import { getPokemonDetails } from "../api";
 import { useLanguage } from "../i18n";
 
@@ -9,15 +10,18 @@ const STAT_NAMES = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"];
  * ParentPanel — One parent's config: Pokemon search, IVs, held item, nature, ability.
  *
  * Props:
- *   label          — "Parent A" or "Parent B" (already translated)
- *   value          — { pokemonId, ivs, heldItem, nature, ability, abilityHidden }
- *   onChange(val)   — state updater
- *   natures        — array of { id, name, increased_stat, decreased_stat }
+ *   label               — "Parent A" or "Parent B" (already translated)
+ *   value               — { pokemonId, ivs, heldItem, nature, ability, abilityHidden }
+ *   onChange(val)        — state updater
+ *   natures             — array of { id, name, increased_stat, decreased_stat }
+ *   lockedEggGroups     — egg groups from the OTHER parent (for compatibility lock)
+ *   onEggGroupsChange   — callback to report this parent's egg groups up
  */
-export default function ParentPanel({ label, value, onChange, natures }) {
+export default function ParentPanel({ label, value, onChange, natures, lockedEggGroups, onEggGroupsChange }) {
   const { t } = useLanguage();
   const [details, setDetails] = useState(null);
   const [notFoundQuery, setNotFoundQuery] = useState(null);
+  const [showBrowse, setShowBrowse] = useState(false);
 
   const HELD_ITEMS = [
     { value: "none", label: t("itemNone") },
@@ -35,14 +39,18 @@ export default function ParentPanel({ label, value, onChange, natures }) {
   useEffect(() => {
     if (!value.pokemonId) {
       setDetails(null);
+      onEggGroupsChange && onEggGroupsChange([]);
       return;
     }
     let cancelled = false;
     getPokemonDetails(value.pokemonId).then((d) => {
-      if (!cancelled) setDetails(d);
+      if (!cancelled) {
+        setDetails(d);
+        onEggGroupsChange && onEggGroupsChange(d.egg_groups || []);
+      }
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [value.pokemonId]);
+  }, [value.pokemonId, onEggGroupsChange]);
 
   function update(patch) {
     onChange({ ...value, ...patch });
@@ -87,6 +95,16 @@ export default function ParentPanel({ label, value, onChange, natures }) {
         onSelect={handlePokemonSelect}
         onNotFound={handleNotFound}
         placeholder={t("searchParent", { label })}
+        lockedEggGroups={lockedEggGroups}
+        onBrowseClick={() => setShowBrowse(true)}
+      />
+
+      {/* Advanced browse panel (modal) */}
+      <AdvancedSearchPanel
+        open={showBrowse}
+        onClose={() => setShowBrowse(false)}
+        onSelect={handlePokemonSelect}
+        lockedEggGroups={lockedEggGroups}
       />
 
       {/* Selected pokemon preview */}

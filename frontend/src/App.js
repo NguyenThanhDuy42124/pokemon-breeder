@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ParentPanel from "./components/ParentPanel";
 import ResultsPanel from "./components/ResultsPanel";
 import { calculateBreeding, getNatures } from "./api";
@@ -23,6 +23,13 @@ function App() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Egg group locking: when one parent is selected, lock the other to compatible egg groups
+  const [parentAEggGroups, setParentAEggGroups] = useState([]);
+  const [parentBEggGroups, setParentBEggGroups] = useState([]);
+
+  const handleParentAEggGroups = useCallback((groups) => setParentAEggGroups(groups), []);
+  const handleParentBEggGroups = useCallback((groups) => setParentBEggGroups(groups), []);
 
   // Fetch natures once on mount
   useEffect(() => {
@@ -94,6 +101,8 @@ function App() {
             value={parentA}
             onChange={setParentA}
             natures={natures}
+            lockedEggGroups={parentBEggGroups}
+            onEggGroupsChange={handleParentAEggGroups}
           />
           <div className="parents-divider">
             <span className="divider-icon">x</span>
@@ -103,6 +112,8 @@ function App() {
             value={parentB}
             onChange={setParentB}
             natures={natures}
+            lockedEggGroups={parentAEggGroups}
+            onEggGroupsChange={handleParentBEggGroups}
           />
         </section>
 

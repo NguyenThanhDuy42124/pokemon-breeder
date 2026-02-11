@@ -57,3 +57,14 @@ export async function getEggGroups() {
   if (!res.ok) return [];
   return res.json();
 }
+
+// ─── Browse Pokemon (advanced search with filters) ───────
+export async function browsePokemon(params = {}) {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== "") qs.set(k, v);
+  });
+  const res = await fetch(`${BASE}/api/pokemon/browse?${qs.toString()}`);
+  if (!res.ok) return { total: 0, pokemon: [] };
+  return res.json();
+}

@@ -94,6 +94,17 @@ const translations = {
     targetExact: "Exact match probability",
     vsGeneral: "vs. General {count}/6",
     pokemonNotFound: "No Pokémon found for \"{query}\"",
+
+    // Browse / Advanced search
+    browsePokemon: "Browse Pokémon",
+    searchByName: "Search by name...",
+    allEggGroups: "All Egg Groups",
+    eggGroupLocked: "Filtered by partner's egg group",
+    showingResults: "Showing {count} of {total}",
+    loading: "Loading...",
+    notFoundInDb: "Not found in database",
+    prev: "Prev",
+    next: "Next",
   },
 
   vi: {
@@ -176,6 +187,17 @@ const translations = {
     targetExact: "Xác suất chính xác",
     vsGeneral: "so với {count}/6 chung",
     pokemonNotFound: "Không tìm thấy Pokémon \"{query}\"",
+
+    // Browse / Advanced search
+    browsePokemon: "Duyệt Pokémon",
+    searchByName: "Tìm theo tên...",
+    allEggGroups: "Tất cả nhóm trứng",
+    eggGroupLocked: "Lọc theo nhóm trứng đối tác",
+    showingResults: "Hiển thị {count} trong {total}",
+    loading: "Đang tải...",
+    notFoundInDb: "Không tìm thấy trong cơ sở dữ liệu",
+    prev: "Trước",
+    next: "Tiếp",
   },
 };
 

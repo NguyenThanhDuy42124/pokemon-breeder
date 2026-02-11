@@ -23,6 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 import os
 from database import SessionLocal
 from models import Pokemon, EggGroup, Nature, Ability, pokemon_ability
@@ -120,6 +121,78 @@ def search_pokemon(
         .all()
     )
     return results
+
+
+# ── Region ID ranges for browse filtering ───────────────────
+REGION_RANGES = {
+    "kanto": (1, 151),
+    "johto": (152, 251),
+    "hoenn": (252, 386),
+    "sinnoh": (387, 493),
+    "unova": (494, 649),
+    "kalos": (650, 721),
+    "alola": (722, 809),
+    "galar": (810, 905),
+    "paldea": (906, 1025),
+}
+
+
+# ════════════════════════════════════════════════════════════
+# API 1b: BROWSE / FILTER POKEMON (advanced search panel)
+# ════════════════════════════════════════════════════════════
+
+@app.get("/api/pokemon/browse", tags=["Pokemon"])
+def browse_pokemon(
+    name: str = Query(None, description="Filter by name substring"),
+    egg_group_id: int = Query(None, description="Filter by a single egg group ID"),
+    egg_group_ids: str = Query(None, description="Comma-separated egg group IDs (for compatibility lock)"),
+    region: str = Query(None, description="Region name (kanto, johto, hoenn, ...)"),
+    limit: int = Query(50, ge=1, le=200, description="Max results per page"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
+    db: Session = Depends(get_db),
+):
+    """
+    Browse all Pokémon with advanced filters.
+    Used by the frontend browse panel and instant search dropdown.
+
+    Filters can be combined:
+      GET /api/pokemon/browse?name=char&region=kanto&egg_group_id=1&limit=20
+
+    Returns { total, pokemon: [...] }
+    """
+    query = db.query(Pokemon).filter(Pokemon.is_breedable == True)
+
+    if name and name.strip():
+        query = query.filter(Pokemon.name.contains(name.lower().strip()))
+
+    if egg_group_id:
+        query = query.filter(Pokemon.egg_groups.any(EggGroup.id == egg_group_id))
+
+    if egg_group_ids:
+        ids = [int(x) for x in egg_group_ids.split(",") if x.strip().isdigit()]
+        if ids:
+            # Include Pokémon in these egg groups OR Ditto (breeds with anything)
+            query = query.filter(
+                or_(
+                    Pokemon.egg_groups.any(EggGroup.id.in_(ids)),
+                    Pokemon.is_ditto == True,
+                )
+            )
+
+    if region and region.lower() in REGION_RANGES:
+        start, end = REGION_RANGES[region.lower()]
+        query = query.filter(Pokemon.id >= start, Pokemon.id <= end)
+
+    total = query.count()
+    results = query.order_by(Pokemon.id).offset(offset).limit(limit).all()
+
+    return {
+        "total": total,
+        "pokemon": [
+            {"id": p.id, "name": p.name, "sprite_url": p.sprite_url}
+            for p in results
+        ],
+    }
 
 
 # ════════════════════════════════════════════════════════════
