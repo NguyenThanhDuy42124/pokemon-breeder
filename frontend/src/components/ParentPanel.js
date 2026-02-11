@@ -66,6 +66,12 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
     });
   }
 
+  function handleClear() {
+    setNotFoundQuery(null);
+    setDetails(null);
+    update({ pokemonId: null, nature: null, ability: null, abilityHidden: false });
+  }
+
   function handleNotFound(query) {
     if (query === null) {
       setNotFoundQuery(null);
@@ -94,9 +100,11 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
       <PokemonSearch
         onSelect={handlePokemonSelect}
         onNotFound={handleNotFound}
+        onClear={handleClear}
         placeholder={t("searchParent", { label })}
         lockedEggGroups={lockedEggGroups}
         onBrowseClick={() => setShowBrowse(true)}
+        selectedPokemon={value.pokemonId}
       />
 
       {/* Advanced browse panel (modal) */}

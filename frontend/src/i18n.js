@@ -97,6 +97,7 @@ const translations = {
 
     // Browse / Advanced search
     browsePokemon: "Browse Pokémon",
+    clear: "Clear",
     searchByName: "Search by name...",
     allEggGroups: "All Egg Groups",
     eggGroupLocked: "Filtered by partner's egg group",
@@ -190,6 +191,7 @@ const translations = {
 
     // Browse / Advanced search
     browsePokemon: "Duyệt Pokémon",
+    clear: "Xóa",
     searchByName: "Tìm theo tên...",
     allEggGroups: "Tất cả nhóm trứng",
     eggGroupLocked: "Lọc theo nhóm trứng đối tác",

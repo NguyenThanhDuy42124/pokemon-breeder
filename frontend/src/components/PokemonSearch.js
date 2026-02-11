@@ -15,9 +15,11 @@ import { useLanguage } from "../i18n";
 export default function PokemonSearch({
   onSelect,
   onNotFound,
+  onClear,
   placeholder = "Search Pokemon...",
   lockedEggGroups,
   onBrowseClick,
+  selectedPokemon,
 }) {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
@@ -71,14 +73,15 @@ export default function PokemonSearch({
     [buildParams]
   );
 
-  // Debounced search on query change
+  // Debounced search on query change (only fetch when dropdown is open)
   useEffect(() => {
+    if (!open) return;
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       fetchResults(query);
     }, 250);
     return () => clearTimeout(timerRef.current);
-  }, [query, fetchResults]);
+  }, [query, fetchResults, open]);
 
   // Re-fetch when egg group lock changes
   useEffect(() => {
@@ -111,6 +114,15 @@ export default function PokemonSearch({
     setOpen(false);
     setHighlightIndex(-1);
     onSelect(pokemon);
+  }
+
+  function handleClear() {
+    setQuery("");
+    setResults([]);
+    setOpen(false);
+    setHighlightIndex(-1);
+    if (onNotFound) onNotFound(null);
+    if (onClear) onClear();
   }
 
   function handleKeyDown(e) {
@@ -154,6 +166,16 @@ export default function PokemonSearch({
           autoComplete="off"
         />
         {loading && <span className="search-spinner-inline">⟳</span>}
+        {(query || selectedPokemon) && (
+          <button
+            className="btn-search-clear"
+            onClick={handleClear}
+            title={t("clear") || "Clear"}
+            type="button"
+          >
+            ✕
+          </button>
+        )}
         <button
           className="btn-browse"
           onClick={(e) => {
