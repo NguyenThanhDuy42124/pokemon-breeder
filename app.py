@@ -8,6 +8,17 @@ import subprocess
 import sys
 import os
 
+# ── Force sync with GitHub (fixes Pterodactyl git pull conflicts) ──
+project_root = os.path.dirname(os.path.abspath(__file__))
+if os.path.isdir(os.path.join(project_root, ".git")):
+    print("==> Syncing code from GitHub...")
+    try:
+        subprocess.run(["git", "fetch", "origin"], cwd=project_root, timeout=30)
+        subprocess.run(["git", "reset", "--hard", "origin/master"], cwd=project_root, timeout=30)
+        print("==> Code synced successfully!")
+    except Exception as e:
+        print(f"==> Git sync skipped: {e}")
+
 # Get port from environment variable (Pterodactyl sets SERVER_PORT or PORT)
 port = os.environ.get("SERVER_PORT") or os.environ.get("PORT") or "8000"
 
