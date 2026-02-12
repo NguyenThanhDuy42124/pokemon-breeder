@@ -285,6 +285,19 @@
   background: transparent;
 }
 
+.search-not-found-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-not-found-hint {
+  font-size: 0.75rem;
+  color: var(--warning);
+  font-style: normal;
+  line-height: 1.3;
+}
+
 .search-sprite {
   width: 32px;
   height: 32px;

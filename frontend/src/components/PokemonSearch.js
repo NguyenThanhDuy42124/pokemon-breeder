@@ -193,7 +193,12 @@ export default function PokemonSearch({
         <ul className="search-dropdown" ref={listRef}>
           {results.length === 0 ? (
             <li className="search-item search-not-found">
-              <span className="search-name">{t("notFoundInDb")}</span>
+              <div className="search-not-found-content">
+                <span className="search-name">{t("notFoundInDb")}</span>
+                {lockedEggGroups && lockedEggGroups.length > 0 && (
+                  <span className="search-not-found-hint">{t("notFoundEggGroupHint")}</span>
+                )}
+              </div>
             </li>
           ) : (
             results.map((p, idx) => (
