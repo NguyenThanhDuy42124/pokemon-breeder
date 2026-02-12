@@ -17,7 +17,7 @@ const EMPTY_PARENT = {
 
 function App() {
   const { t, lang, setLang } = useLanguage();
-  const [tipsOpen, setTipsOpen] = useState(false);
+  const [tipsOpen, setTipsOpen] = useState(true);
   const [parentA, setParentA] = useState({ ...EMPTY_PARENT });
   const [parentB, setParentB] = useState({ ...EMPTY_PARENT });
   const [targetIvs, setTargetIvs] = useState([true, true, true, true, true, true]);
