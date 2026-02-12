@@ -46,7 +46,8 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
     getPokemonDetails(value.pokemonId).then((d) => {
       if (!cancelled) {
         setDetails(d);
-        onEggGroupsChange && onEggGroupsChange(d.egg_groups || []);
+        // Ditto breeds with anything — don't lock partner's egg groups
+        onEggGroupsChange && onEggGroupsChange(d.is_ditto ? [] : (d.egg_groups || []));
       }
     }).catch(() => {});
     return () => { cancelled = true; };
