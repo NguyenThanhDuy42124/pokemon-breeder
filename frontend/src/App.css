@@ -1119,6 +1119,429 @@
 }
 
 /* ══════════════════════════════════════════════════════════
+   Tips Sidebar Panel
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Toggle Button (left edge tab) ── */
+.tips-toggle-btn {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 7px;
+  background: linear-gradient(135deg, var(--surface2), var(--surface));
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  cursor: pointer;
+  box-shadow: 3px 0 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s;
+  animation: tipTabPulse 3s ease-in-out infinite;
+}
+
+.tips-toggle-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 3px 0 20px rgba(233, 69, 96, 0.4);
+  animation: none;
+}
+
+.tips-toggle-btn:hover .tips-toggle-text {
+  color: white;
+}
+
+@keyframes tipTabPulse {
+  0%, 100% { box-shadow: 3px 0 15px rgba(0, 0, 0, 0.3); }
+  50% { box-shadow: 3px 0 20px rgba(233, 69, 96, 0.25); }
+}
+
+.tips-toggle-icon {
+  font-size: 1.2rem;
+}
+
+.tips-toggle-text {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--accent);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  transition: color 0.2s;
+}
+
+/* ── Overlay ── */
+.tips-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 498;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Sidebar Panel ── */
+.tips-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 380px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  box-shadow: 5px 0 25px rgba(0, 0, 0, 0.4);
+}
+
+.tips-sidebar.open {
+  transform: translateX(0);
+}
+
+/* Desktop: push content */
+@media (min-width: 1025px) {
+  .app {
+    transition: margin-left 0.3s ease;
+  }
+
+  .app.tips-open {
+    margin-left: 380px;
+  }
+
+  .tips-overlay {
+    display: none;
+  }
+}
+
+/* ── Sidebar Header ── */
+.tips-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--surface), var(--surface2));
+  flex-shrink: 0;
+}
+
+.tips-sidebar-title {
+  color: var(--accent);
+  font-size: 1.1rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tips-title-icon {
+  font-size: 1.2rem;
+}
+
+.tips-back-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+
+.tips-back-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.tips-close-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.tips-close-btn:hover {
+  background: var(--bg);
+  color: var(--accent);
+  border-color: var(--border);
+}
+
+/* ── Sidebar Content ── */
+.tips-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar for sidebar */
+.tips-sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tips-sidebar-content::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.tips-sidebar-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.tips-sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ── Tips Menu ── */
+.tips-menu {
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: tipFadeIn 0.2s ease;
+}
+
+.tips-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.9rem 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  color: var(--text);
+  width: 100%;
+}
+
+.tips-menu-item:hover {
+  border-color: var(--accent);
+  background: var(--surface2);
+  transform: translateX(4px);
+  box-shadow: 0 2px 12px rgba(233, 69, 96, 0.12);
+}
+
+.tips-menu-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: center;
+}
+
+.tips-menu-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tips-menu-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.tips-menu-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.tips-menu-arrow {
+  font-size: 1.4rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.tips-menu-item:hover .tips-menu-arrow {
+  transform: translateX(3px);
+  color: var(--accent);
+}
+
+/* ── Tip Detail View ── */
+.tip-detail {
+  animation: tipSlideIn 0.25s ease;
+}
+
+.tip-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem 1.2rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.tip-detail-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.tip-detail-title {
+  color: var(--accent);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.tip-detail-subtitle {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 2px 0 0 0;
+}
+
+.tip-detail-body {
+  padding: 1rem 1.2rem;
+}
+
+/* ── Tip Text ── */
+.tip-text {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text);
+  margin: 0.5rem 0;
+}
+
+/* ── Tip Table ── */
+.tip-table-wrapper {
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.tip-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.tip-table th {
+  text-align: left;
+  padding: 0.55rem 0.6rem;
+  background: var(--surface2);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.tip-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.tip-table tr:last-child td {
+  border-bottom: none;
+}
+
+.tip-table tr:hover {
+  background: rgba(233, 69, 96, 0.04);
+}
+
+/* ── Tip Steps ── */
+.tip-steps {
+  margin: 0.8rem 0;
+}
+
+.tip-steps-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.tip-steps-list {
+  list-style-type: decimal;
+  padding-left: 1.4rem;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.tip-steps-list li {
+  margin-bottom: 0.3rem;
+  padding-left: 0.2rem;
+}
+
+.tip-steps-list li::marker {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Tip Note ── */
+.tip-note {
+  margin: 0.8rem 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.tip-note-success {
+  background: rgba(52, 211, 153, 0.08);
+  border-left: 3px solid var(--success);
+}
+
+.tip-note-warning {
+  background: rgba(251, 191, 36, 0.08);
+  border-left: 3px solid var(--warning);
+}
+
+.tip-note-info {
+  background: rgba(96, 165, 250, 0.08);
+  border-left: 3px solid #60a5fa;
+}
+
+.tip-note-title {
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.tip-note-success .tip-note-title { color: var(--success); }
+.tip-note-warning .tip-note-title { color: var(--warning); }
+.tip-note-info .tip-note-title    { color: #60a5fa; }
+
+.tip-note-text {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* ── Animations ── */
+@keyframes tipFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tipSlideIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ══════════════════════════════════════════════════════════
    Responsive — Tablet & Mobile
    ══════════════════════════════════════════════════════════ */
 
@@ -1238,6 +1661,19 @@
   /* Footer */
   .app-footer {
     padding: 1rem;
+  }
+
+  /* Tips sidebar tablet */
+  .tips-sidebar {
+    width: 340px;
+  }
+
+  .tips-toggle-btn {
+    padding: 10px 5px;
+  }
+
+  .tips-toggle-icon {
+    font-size: 1rem;
   }
 }
 
@@ -1448,5 +1884,58 @@
 
   .footer-credits {
     font-size: 0.65rem;
+  }
+
+  /* Tips sidebar mobile */
+  .tips-sidebar {
+    width: 88vw;
+  }
+
+  .tips-toggle-btn {
+    top: auto;
+    bottom: 16px;
+    transform: none;
+    border-radius: 0 10px 10px 0;
+    padding: 10px 6px;
+  }
+
+  .tip-detail-header {
+    padding: 0.8rem;
+  }
+
+  .tip-detail-body {
+    padding: 0.8rem;
+  }
+
+  .tip-table {
+    font-size: 0.72rem;
+  }
+
+  .tip-table th,
+  .tip-table td {
+    padding: 0.4rem;
+  }
+
+  .tip-steps-list {
+    font-size: 0.78rem;
+    padding-left: 1.2rem;
+  }
+
+  .tip-note {
+    font-size: 0.78rem;
+    padding: 0.6rem;
+  }
+
+  .tips-menu-item {
+    padding: 0.7rem 0.8rem;
+  }
+
+  .tips-menu-icon {
+    font-size: 1.2rem;
+    width: 28px;
+  }
+
+  .tips-menu-title {
+    font-size: 0.82rem;
   }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ParentPanel from "./components/ParentPanel";
 import ResultsPanel from "./components/ResultsPanel";
+import TipsPanel from "./components/TipsPanel";
 import { calculateBreeding, getNatures } from "./api";
 import { useLanguage } from "./i18n";
 import "./App.css";
@@ -16,6 +17,7 @@ const EMPTY_PARENT = {
 
 function App() {
   const { t, lang, setLang } = useLanguage();
+  const [tipsOpen, setTipsOpen] = useState(false);
   const [parentA, setParentA] = useState({ ...EMPTY_PARENT });
   const [parentB, setParentB] = useState({ ...EMPTY_PARENT });
   const [targetIvs, setTargetIvs] = useState([true, true, true, true, true, true]);
@@ -78,7 +80,9 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${tipsOpen ? 'tips-open' : ''}`}>
+      <TipsPanel isOpen={tipsOpen} onToggle={() => setTipsOpen(!tipsOpen)} />
+
       {/* Header */}
       <header className="app-header">
         <div className="header-row">
