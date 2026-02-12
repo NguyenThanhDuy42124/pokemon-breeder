@@ -42,8 +42,20 @@ from schemas import (
 from breeding import calculate_breeding
 from auto_update import check_and_update
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging with timestamp
+LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATEFMT)
+
+# Apply same format to uvicorn loggers so access logs show timestamps
+for _uv_logger_name in ("uvicorn", "uvicorn.access", "uvicorn.error"):
+    _uv_logger = logging.getLogger(_uv_logger_name)
+    for _handler in _uv_logger.handlers:
+        _handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=LOG_DATEFMT))
+    if not _uv_logger.handlers:
+        _h = logging.StreamHandler()
+        _h.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=LOG_DATEFMT))
+        _uv_logger.addHandler(_h)
 
 
 # ── Lifespan: runs auto-update on startup ──────────────────
