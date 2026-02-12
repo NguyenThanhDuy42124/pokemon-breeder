@@ -11,6 +11,88 @@ const TIPS_DATA = {
     close: "✕",
     tips: [
       {
+        id: "author-guide",
+        icon: "🧬",
+        title: "Secret Family Recipe",
+        subtitle: "Step-by-step from 0IV to 6IV by @DaoTacVoSi",
+        sections: [
+          {
+            type: "note",
+            variant: "info",
+            title: "🧬 Complete 0→6IV Roadmap",
+            text: "This is the author's personal breeding strategy — a practical, step-by-step route from catching wild Pokémon to achieving perfect 6IV.",
+          },
+          {
+            type: "steps",
+            title: "STEP 1: Build a \"Gene Bank\"",
+            items: [
+              "Catch many Pokémon of the same species",
+              "Keep those with 1–2 different perfect IVs (31)",
+              "Goal: have 31s spread across all stats for combining later",
+              "Example: Mon A → HP 31 | Mon B → Atk 31 | Mon C → Spe 31 | Mon D → SpD 31",
+            ],
+          },
+          {
+            type: "steps",
+            title: "STEP 2: Combine to 2IV",
+            items: [
+              "Give each parent the Power Item matching their perfect stat",
+              "HP 31 → Power Weight | Atk 31 → Power Bracer",
+              "Power Items guarantee that stat is inherited",
+              "Result: offspring with 2 perfect IVs!",
+            ],
+          },
+          {
+            type: "steps",
+            title: "STEP 3: Build up 3IV → 4IV",
+            items: [
+              "Breed 2IV offspring with another Pokémon that has the missing 31 stats",
+              "Keep using Power Items to lock important stats",
+              "Replace weaker parents with better offspring each time",
+              "Principle: whichever has more 31s becomes the main breeder",
+              "Gradually you'll reach 3IV → then 4IV!",
+            ],
+          },
+          {
+            type: "steps",
+            title: "STEP 4: Switch to Destiny Knot (acceleration phase)",
+            items: [
+              "Once you have a 3–4IV Pokémon, it's Destiny Knot time",
+              "One parent holds Destiny Knot (passes 5 random IVs from both parents)",
+              "Other parent holds Power Item for the most important stat",
+              "Destiny Knot (5 IVs) + Power Item (1 guaranteed) = huge boost",
+              "Repeat until you get the desired 5IV spread",
+            ],
+          },
+          {
+            type: "steps",
+            title: "STEP 5: Hunt for 6IV (the \"RNG prayer\" phase)",
+            items: [
+              "Once you have two 5IV parents:",
+              "One holds Destiny Knot, other holds Power Item for the key stat",
+              "The 6th stat is pure luck: ~1/32 chance to roll 31",
+              "Just be patient — it will come!",
+            ],
+          },
+          {
+            type: "table",
+            headers: ["Phase", "Method", "Result"],
+            rows: [
+              ["1IV → 2IV", "Power Items", "2 perfect IVs"],
+              ["2IV → 3IV → 4IV", "Power Items + swap parents", "3–4 perfect IVs"],
+              ["3–4IV → 5IV", "Destiny Knot + Power Item", "5 perfect IVs"],
+              ["5IV + 5IV → 6IV", "Destiny Knot + Power Item", "6 perfect IVs (🎲 ~1/32)"],
+            ],
+          },
+          {
+            type: "note",
+            variant: "success",
+            title: "💡 Author's Note",
+            text: "The key is patience and always swapping in better offspring. Don't try to jump from 0 to 6IV — build your gene pool gradually!",
+          },
+        ],
+      },
+      {
         id: "held-items",
         icon: "🎒",
         title: "Held Items Guide",
@@ -219,88 +301,6 @@ const TIPS_DATA = {
           },
         ],
       },
-      {
-        id: "author-guide",
-        icon: "🧬",
-        title: "Author's Breeding Roadmap",
-        subtitle: "Step-by-step from 0IV to 6IV by @DaoTacVoSi",
-        sections: [
-          {
-            type: "note",
-            variant: "info",
-            title: "🧬 Complete 0→6IV Roadmap",
-            text: "This is the author's personal breeding strategy — a practical, step-by-step route from catching wild Pokémon to achieving perfect 6IV.",
-          },
-          {
-            type: "steps",
-            title: "STEP 1: Build a \"Gene Bank\"",
-            items: [
-              "Catch many Pokémon of the same species",
-              "Keep those with 1–2 different perfect IVs (31)",
-              "Goal: have 31s spread across all stats for combining later",
-              "Example: Mon A → HP 31 | Mon B → Atk 31 | Mon C → Spe 31 | Mon D → SpD 31",
-            ],
-          },
-          {
-            type: "steps",
-            title: "STEP 2: Combine to 2IV",
-            items: [
-              "Give each parent the Power Item matching their perfect stat",
-              "HP 31 → Power Weight | Atk 31 → Power Bracer",
-              "Power Items guarantee that stat is inherited",
-              "Result: offspring with 2 perfect IVs!",
-            ],
-          },
-          {
-            type: "steps",
-            title: "STEP 3: Build up 3IV → 4IV",
-            items: [
-              "Breed 2IV offspring with another Pokémon that has the missing 31 stats",
-              "Keep using Power Items to lock important stats",
-              "Replace weaker parents with better offspring each time",
-              "Principle: whichever has more 31s becomes the main breeder",
-              "Gradually you'll reach 3IV → then 4IV!",
-            ],
-          },
-          {
-            type: "steps",
-            title: "STEP 4: Switch to Destiny Knot (acceleration phase)",
-            items: [
-              "Once you have a 3–4IV Pokémon, it's Destiny Knot time",
-              "One parent holds Destiny Knot (passes 5 random IVs from both parents)",
-              "Other parent holds Power Item for the most important stat",
-              "Destiny Knot (5 IVs) + Power Item (1 guaranteed) = huge boost",
-              "Repeat until you get the desired 5IV spread",
-            ],
-          },
-          {
-            type: "steps",
-            title: "STEP 5: Hunt for 6IV (the \"RNG prayer\" phase)",
-            items: [
-              "Once you have two 5IV parents:",
-              "One holds Destiny Knot, other holds Power Item for the key stat",
-              "The 6th stat is pure luck: ~1/32 chance to roll 31",
-              "Just be patient — it will come!",
-            ],
-          },
-          {
-            type: "table",
-            headers: ["Phase", "Method", "Result"],
-            rows: [
-              ["1IV → 2IV", "Power Items", "2 perfect IVs"],
-              ["2IV → 3IV → 4IV", "Power Items + swap parents", "3–4 perfect IVs"],
-              ["3–4IV → 5IV", "Destiny Knot + Power Item", "5 perfect IVs"],
-              ["5IV + 5IV → 6IV", "Destiny Knot + Power Item", "6 perfect IVs (🎲 ~1/32)"],
-            ],
-          },
-          {
-            type: "note",
-            variant: "success",
-            title: "💡 Author's Note",
-            text: "The key is patience and always swapping in better offspring. Don't try to jump from 0 to 6IV — build your gene pool gradually!",
-          },
-        ],
-      },
     ],
   },
 
@@ -309,6 +309,88 @@ const TIPS_DATA = {
     back: "← Quay lại",
     close: "✕",
     tips: [
+      {
+        id: "author-guide",
+        icon: "🧬",
+        title: "Bí Kíp Gia Truyền",
+        subtitle: "Hướng dẫn từ 0IV đến 6IV bởi @DaoTacVoSi",
+        sections: [
+          {
+            type: "note",
+            variant: "info",
+            title: "🧬 Lộ Trình Hoàn Chỉnh 0→6IV",
+            text: "Đây là chiến lược lai giống cá nhân của tác giả — một lộ trình thực tế, từng bước từ bắt Pokemon hoang dã đến đạt 6IV hoàn hảo.",
+          },
+          {
+            type: "steps",
+            title: "BƯỚC 1: Tạo \"Ngân Hàng Gene\"",
+            items: [
+              "Bắt nhiều Pokémon cùng loài",
+              "Giữ lại những con có 1–2 IV 31 khác nhau",
+              "Mục tiêu: có đủ các chỉ số 31 rải đều để ghép sau này",
+              "Ví dụ: Con A → HP 31 | Con B → Atk 31 | Con C → Spe 31 | Con D → SpD 31",
+            ],
+          },
+          {
+            type: "steps",
+            title: "BƯỚC 2: Ghép thành 2IV",
+            items: [
+              "Cho mỗi con cầm Power Item tương ứng với chỉ số 31 của nó",
+              "HP 31 → Power Weight | Atk 31 → Power Bracer",
+              "Power Item đảm bảo chỉ số đó được truyền lại",
+              "Kết quả: con ra đời sẽ có 2 IV hoàn hảo!",
+            ],
+          },
+          {
+            type: "steps",
+            title: "BƯỚC 3: Xây dần 3IV → 4IV",
+            items: [
+              "Ghép con 2IV với con khác có IV 31 còn thiếu",
+              "Tiếp tục dùng Power Item để khóa các chỉ số quan trọng",
+              "Mỗi lần ra con tốt hơn thì thay bố/mẹ cũ bằng con mới",
+              "Nguyên tắc: con nào nhiều IV 31 hơn → giữ lại làm \"giống chính\"",
+              "Dần dần bạn sẽ có 3IV → rồi 4IV hoàn hảo!",
+            ],
+          },
+          {
+            type: "steps",
+            title: "BƯỚC 4: Chuyển sang Destiny Knot (giai đoạn tăng tốc)",
+            items: [
+              "Khi đã có con 3–4IV, đã đến lúc dùng Destiny Knot",
+              "Một con cầm Destiny Knot (truyền 5 IV bất kỳ từ bố mẹ)",
+              "Con còn lại cầm Power Item cho chỉ số quan trọng nhất",
+              "Destiny Knot (5 IVs) + Power Item (1 đảm bảo) = boost lớn",
+              "Lặp lại đến khi ra 5IV mong muốn",
+            ],
+          },
+          {
+            type: "steps",
+            title: "BƯỚC 5: Săn 6IV (giai đoạn \"RNG cầu nguyện\")",
+            items: [
+              "Khi đã có 2 con 5IV:",
+              "1 con cầm Destiny Knot, 1 con cầm Power Item",
+              "Chỉ số còn lại là may rủi: ~1/32 cơ hội để random ra 31",
+              "Lúc này chỉ cần kiên nhẫn — sẽ đến thôi!",
+            ],
+          },
+          {
+            type: "table",
+            headers: ["Giai đoạn", "Phương pháp", "Kết quả"],
+            rows: [
+              ["1IV → 2IV", "Power Items", "2 IVs hoàn hảo"],
+              ["2IV → 3IV → 4IV", "Power Items + thay bố mẹ", "3–4 IVs hoàn hảo"],
+              ["3–4IV → 5IV", "Destiny Knot + Power Item", "5 IVs hoàn hảo"],
+              ["5IV + 5IV → 6IV", "Destiny Knot + Power Item", "6 IVs hoàn hảo (🎲 ~1/32)"],
+            ],
+          },
+          {
+            type: "note",
+            variant: "success",
+            title: "💡 Lời Nhắn Từ Tác Giả",
+            text: "Bí quyết là kiên nhẫn và luôn thay bố mẹ bằng con tốt hơn. Đừng cố nhảy từ 0 lên 6IV — hãy xây dựng ngân hàng gene từ từ!",
+          },
+        ],
+      },
       {
         id: "held-items",
         icon: "🎒",
@@ -515,88 +597,6 @@ const TIPS_DATA = {
             variant: "info",
             title: "ℹ Lời Khuyên Thực Tế",
             text: "Hầu hết người chơi thi đấu lai 5IV (bỏ stat không cần) rồi dùng Bottle Cap cho stat thứ 6. IV Atk = 0 thực ra được ưa chuộng cho đánh đặc biệt (giảm sát thương Foul Play & confusion)!",
-          },
-        ],
-      },
-      {
-        id: "author-guide",
-        icon: "🧬",
-        title: "Lộ Trình Của Tác Giả",
-        subtitle: "Hướng dẫn từ 0IV đến 6IV bởi @DaoTacVoSi",
-        sections: [
-          {
-            type: "note",
-            variant: "info",
-            title: "🧬 Lộ Trình Hoàn Chỉnh 0→6IV",
-            text: "Đây là chiến lược lai giống cá nhân của tác giả — một lộ trình thực tế, từng bước từ bắt Pokemon hoang dã đến đạt 6IV hoàn hảo.",
-          },
-          {
-            type: "steps",
-            title: "BƯỚC 1: Tạo \"Ngân Hàng Gene\"",
-            items: [
-              "Bắt nhiều Pokémon cùng loài",
-              "Giữ lại những con có 1–2 IV 31 khác nhau",
-              "Mục tiêu: có đủ các chỉ số 31 rải đều để ghép sau này",
-              "Ví dụ: Con A → HP 31 | Con B → Atk 31 | Con C → Spe 31 | Con D → SpD 31",
-            ],
-          },
-          {
-            type: "steps",
-            title: "BƯỚC 2: Ghép thành 2IV",
-            items: [
-              "Cho mỗi con cầm Power Item tương ứng với chỉ số 31 của nó",
-              "HP 31 → Power Weight | Atk 31 → Power Bracer",
-              "Power Item đảm bảo chỉ số đó được truyền lại",
-              "Kết quả: con ra đời sẽ có 2 IV hoàn hảo!",
-            ],
-          },
-          {
-            type: "steps",
-            title: "BƯỚC 3: Xây dần 3IV → 4IV",
-            items: [
-              "Ghép con 2IV với con khác có IV 31 còn thiếu",
-              "Tiếp tục dùng Power Item để khóa các chỉ số quan trọng",
-              "Mỗi lần ra con tốt hơn thì thay bố/mẹ cũ bằng con mới",
-              "Nguyên tắc: con nào nhiều IV 31 hơn → giữ lại làm \"giống chính\"",
-              "Dần dần bạn sẽ có 3IV → rồi 4IV hoàn hảo!",
-            ],
-          },
-          {
-            type: "steps",
-            title: "BƯỚC 4: Chuyển sang Destiny Knot (giai đoạn tăng tốc)",
-            items: [
-              "Khi đã có con 3–4IV, đã đến lúc dùng Destiny Knot",
-              "Một con cầm Destiny Knot (truyền 5 IV bất kỳ từ bố mẹ)",
-              "Con còn lại cầm Power Item cho chỉ số quan trọng nhất",
-              "Destiny Knot (5 IVs) + Power Item (1 đảm bảo) = boost lớn",
-              "Lặp lại đến khi ra 5IV mong muốn",
-            ],
-          },
-          {
-            type: "steps",
-            title: "BƯỚC 5: Săn 6IV (giai đoạn \"RNG cầu nguyện\")",
-            items: [
-              "Khi đã có 2 con 5IV:",
-              "1 con cầm Destiny Knot, 1 con cầm Power Item",
-              "Chỉ số còn lại là may rủi: ~1/32 cơ hội để random ra 31",
-              "Lúc này chỉ cần kiên nhẫn — sẽ đến thôi!",
-            ],
-          },
-          {
-            type: "table",
-            headers: ["Giai đoạn", "Phương pháp", "Kết quả"],
-            rows: [
-              ["1IV → 2IV", "Power Items", "2 IVs hoàn hảo"],
-              ["2IV → 3IV → 4IV", "Power Items + thay bố mẹ", "3–4 IVs hoàn hảo"],
-              ["3–4IV → 5IV", "Destiny Knot + Power Item", "5 IVs hoàn hảo"],
-              ["5IV + 5IV → 6IV", "Destiny Knot + Power Item", "6 IVs hoàn hảo (🎲 ~1/32)"],
-            ],
-          },
-          {
-            type: "note",
-            variant: "success",
-            title: "💡 Lời Nhắn Từ Tác Giả",
-            text: "Bí quyết là kiên nhẫn và luôn thay bố mẹ bằng con tốt hơn. Đừng cố nhảy từ 0 lên 6IV — hãy xây dựng ngân hàng gene từ từ!",
           },
         ],
       },
