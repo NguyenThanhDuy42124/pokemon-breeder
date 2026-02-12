@@ -24,7 +24,10 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
+from contextlib import asynccontextmanager
 import os
+import logging
+import threading
 from database import SessionLocal
 from models import Pokemon, EggGroup, Nature, Ability, pokemon_ability
 from schemas import (
@@ -37,6 +40,26 @@ from schemas import (
     BreedingResponse,
 )
 from breeding import calculate_breeding
+from auto_update import check_and_update
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+
+# ── Lifespan: runs auto-update on startup ──────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Run auto-update check in background on startup."""
+    def run_update():
+        try:
+            check_and_update()
+        except Exception as e:
+            logging.getLogger("auto_update").error(f"Startup update failed: {e}")
+
+    # Run in background thread so server starts immediately
+    thread = threading.Thread(target=run_update, daemon=True)
+    thread.start()
+    yield
 
 
 # ── Create the FastAPI app ──────────────────────────────────
@@ -44,6 +67,7 @@ app = FastAPI(
     title="Pokémon Breeding Calculator API",
     description="Gen 9 breeding mechanics calculator",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # ── CORS Middleware ─────────────────────────────────────────
