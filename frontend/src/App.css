@@ -8,6 +8,7 @@
 [data-theme="dark"] {
   --bg:            #111827;
   --bg-subtle:     #1a2236;
+  --header-bg:     var(--surface);
   --surface:       #1f2937;
   --surface2:      #374151;
   --surface-glass:  rgba(31, 41, 55, 0.85);
@@ -45,11 +46,12 @@
 
 /* ── Light Theme (inspired by Pokemon Database — warm grays, soft contrast) ── */
 [data-theme="light"] {
-  --bg:            #f5f5f5;
-  --bg-subtle:     #ececec;
+  --bg:            #e8e8e8;
+  --bg-subtle:     #e0e0e0;
   --surface:       #ffffff;
-  --surface2:      #f9f9f9;
+  --surface2:      #f5f5f5;
   --surface-glass:  rgba(255, 255, 255, 0.92);
+  --header-bg:     #dedede;
   --accent:        #d53b30;
   --accent-hover:  #e04e44;
   --accent-glow:   rgba(213, 59, 48, 0.18);
@@ -72,9 +74,9 @@
   --shadow-glow:   0 0 12px var(--accent-glow);
   --pokeball-opacity: 0.025;
   --overlay-bg:    rgba(0, 0, 0, 0.35);
-  --scrollbar-track: #f0f0f0;
-  --scrollbar-thumb: #cccccc;
-  --scrollbar-hover: #aaaaaa;
+  --scrollbar-track: #e0e0e0;
+  --scrollbar-thumb: #bfbfbf;
+  --scrollbar-hover: #999999;
 }
 
 /* ── Base Reset ── */
@@ -140,7 +142,7 @@ body {
 .app-header {
   text-align: center;
   padding: 2rem 1.5rem 1.5rem;
-  background: var(--surface);
+  background: var(--header-bg, var(--surface));
   border-bottom: 3px solid var(--accent);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
   position: relative;
