@@ -1,10 +1,11 @@
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #1a1a2e;
-  color: #eaeaea;
+  background: var(--bg, #111827);
+  color: var(--text, #f3f4f6);
+  transition: background 0.35s ease, color 0.35s ease;
 }
 
 code {
@@ -12,17 +13,17 @@ code {
     monospace;
 }
 
-/* Scrollbar styling for dark theme */
+/* Scrollbar — uses CSS vars from App.css theme */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: var(--scrollbar-track, #1f2937);
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a4a;
+  background: var(--scrollbar-thumb, #374151);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a5a;
+  background: var(--scrollbar-hover, #4b5563);
 }

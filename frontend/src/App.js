@@ -17,7 +17,24 @@ const EMPTY_PARENT = {
 
 function App() {
   const { t, lang, setLang } = useLanguage();
-  const [tipsOpen, setTipsOpen] = useState(true);
+
+  // Theme: persist in localStorage
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem("pokemon-breeder-theme") || "dark"
+  );
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("pokemon-breeder-theme", theme);
+  }, [theme]);
+
+  // Tips sidebar: persist open/closed state
+  const [tipsOpen, setTipsOpen] = useState(() =>
+    localStorage.getItem("pokemon-breeder-tips") !== "closed"
+  );
+  useEffect(() => {
+    localStorage.setItem("pokemon-breeder-tips", tipsOpen ? "open" : "closed");
+  }, [tipsOpen]);
+
   const [parentA, setParentA] = useState({ ...EMPTY_PARENT });
   const [parentB, setParentB] = useState({ ...EMPTY_PARENT });
   const [targetIvs, setTargetIvs] = useState([true, true, true, true, true, true]);
@@ -79,6 +96,12 @@ function App() {
     setLang(lang === "en" ? "vi" : "en");
   }
 
+  function toggleTheme() {
+    setTheme(prev => (prev === "dark" ? "light" : "dark"));
+  }
+
+  const bothSelected = parentA.pokemonId && parentB.pokemonId;
+
   return (
     <div className={`app ${tipsOpen ? 'tips-open' : ''}`}>
       <TipsPanel isOpen={tipsOpen} onToggle={() => setTipsOpen(!tipsOpen)} />
@@ -90,9 +113,14 @@ function App() {
             <h1>{t("title")}</h1>
             <p className="subtitle">{t("subtitle")}</p>
           </div>
-          <button className="btn-lang" onClick={toggleLang} title={t("langToggle")}>
-            {lang === "en" ? "🇻🇳 VI" : "🇬🇧 EN"}
-          </button>
+          <div className="header-buttons">
+            <button className="btn-theme" onClick={toggleTheme} title={t("themeToggle")}>
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+            <button className="btn-lang" onClick={toggleLang} title={t("langToggle")}>
+              {lang === "en" ? "🇻🇳 VI" : "🇬🇧 EN"}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -127,7 +155,7 @@ function App() {
         {/* Calculate */}
         <section className="action-row">
           <button
-            className="btn-calculate"
+            className={`btn-calculate${bothSelected && !loading ? ' ready' : ''}`}
             onClick={handleCalculate}
             disabled={loading}
           >

@@ -86,6 +86,9 @@ const translations = {
     // Language toggle
     langToggle: "Tieng Viet",
 
+    // Theme toggle
+    themeToggle: "Switch to light mode",
+
     // Target IVs
     targetIvs: "Desired Offspring IVs",
     targetIvsHint: "Select which IVs you want the baby to have (31)",
@@ -180,6 +183,9 @@ const translations = {
 
     // Language toggle
     langToggle: "English",
+
+    // Theme toggle
+    themeToggle: "Chuyển sang chế độ sáng",
 
     // Target IVs
     targetIvs: "IVs mong muốn cho con",
