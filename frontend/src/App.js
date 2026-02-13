@@ -145,16 +145,9 @@ function App() {
       <footer className="app-footer">
         <p>{t("footer")}</p>
         <p className="footer-credits">
-          Made by <strong>@DaoTacVoSi</strong> | GitHub: <a href="https://github.com/NguyenThanhDuy42124" target="_blank" rel="noopener noreferrer">NguyenThanhDuy42124</a>
+          Made by <strong>@DaoTacVoSi05</strong> | GitHub: <a href="https://github.com/NguyenThanhDuy42124" target="_blank" rel="noopener noreferrer">NguyenThanhDuy42124</a>
         </p>
-
-        {/* Donate */}
-        <div className="donate-section">
-          <p className="donate-title">☕ {t("donateTitle")}</p>
-          <p className="donate-info">STK: <strong>0334674017</strong> | {t("donateName")}: <strong>NGUYEN THANH DUY</strong> | MB Bank</p>
-          <div className="donate-qr">
-            <img src="/images/donate-qr.png" alt="Donate QR" className="donate-qr-img" />
-          </div>
+        <div className="footer-links">
         </div>
       </footer>
     </div>
