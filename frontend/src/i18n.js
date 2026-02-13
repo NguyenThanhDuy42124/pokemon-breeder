@@ -107,8 +107,6 @@ const translations = {
     notFoundEggGroupHint: "Results are filtered by partner's egg group. Try clearing the other parent first.",
     prev: "Prev",
     next: "Next",
-    donateTitle: "Support the developer",
-    donateName: "Name",
   },
 
   vi: {
@@ -204,8 +202,6 @@ const translations = {
     notFoundEggGroupHint: "Kết quả đang lọc theo nhóm trứng đối tác. Hãy thử xóa Pokémon bên kia trước.",
     prev: "Trước",
     next: "Tiếp",
-    donateTitle: "Ủng hộ tác giả",
-    donateName: "Tên",
   },
 };
 
