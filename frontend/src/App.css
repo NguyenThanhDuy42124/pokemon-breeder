@@ -46,17 +46,17 @@
 
 /* ── Light Theme (inspired by Pokemon Database — warm grays, soft contrast) ── */
 [data-theme="light"] {
-  --bg:            #e8e8e8;
-  --bg-subtle:     #e0e0e0;
+  --bg:            #111827;
+  --bg-subtle:     #1a2236;
   --surface:       #ffffff;
   --surface2:      #f5f5f5;
   --surface-glass:  rgba(255, 255, 255, 0.92);
-  --header-bg:     #2d2d2d;
+  --header-bg:     #111827;
   --header-text:   #f0f0f0;
   --header-muted:  #b0b0b0;
-  --header-btn-bg: #3d3d3d;
+  --header-btn-bg: #1f2937;
   --header-btn-text: #e0e0e0;
-  --header-btn-border: #505050;
+  --header-btn-border: #374151;
   --accent:        #d53b30;
   --accent-hover:  #e04e44;
   --accent-glow:   rgba(213, 59, 48, 0.18);
@@ -74,14 +74,14 @@
   --info:          #3b5ca8;
   --info-bg:       rgba(59, 92, 168, 0.06);
   --danger-bg:     rgba(213, 59, 48, 0.06);
-  --shadow:        0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-lg:     0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow:        0 1px 4px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg:     0 4px 16px rgba(0, 0, 0, 0.2);
   --shadow-glow:   0 0 12px var(--accent-glow);
-  --pokeball-opacity: 0.025;
-  --overlay-bg:    rgba(0, 0, 0, 0.35);
-  --scrollbar-track: #e0e0e0;
-  --scrollbar-thumb: #bfbfbf;
-  --scrollbar-hover: #999999;
+  --pokeball-opacity: 0.03;
+  --overlay-bg:    rgba(0, 0, 0, 0.5);
+  --scrollbar-track: #1a2236;
+  --scrollbar-thumb: #374151;
+  --scrollbar-hover: #4b5563;
 }
 
 /* ── Base Reset ── */
