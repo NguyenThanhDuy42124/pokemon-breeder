@@ -25,6 +25,7 @@ const translations = {
     searchPlaceholder: "Search Pokemon...",
     searchParent: "Search {label}...",
     eggGroups: "Egg Groups",
+    genderless: "⚪ Genderless",
 
     // IVs
     perfectIvs: "Perfect IVs (31)",
@@ -123,6 +124,7 @@ const translations = {
     searchPlaceholder: "Tìm Pokémon...",
     searchParent: "Tìm {label}...",
     eggGroups: "Nhóm Trứng",
+    genderless: "⚪ Không giới tính",
 
     // IVs
     perfectIvs: "IVs hoàn hảo (31)",

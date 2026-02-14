@@ -537,6 +537,70 @@ body {
   margin-top: 0.2rem;
 }
 
+/* ── Gender Ratio Bar ── */
+.gender-ratio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.gender-genderless {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.gender-bar {
+  display: flex;
+  height: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex: 1;
+  min-width: 100px;
+  border: 1px solid var(--border);
+}
+
+.gender-male {
+  background: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: width 0.3s ease;
+}
+
+.gender-female {
+  background: #ec4899;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: width 0.3s ease;
+}
+
+.gender-label-outside {
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gender-male-text {
+  color: #3b82f6;
+}
+
+.gender-female-text {
+  color: #ec4899;
+}
+
 .btn-preview-clear {
   margin-left: auto;
   background: none;

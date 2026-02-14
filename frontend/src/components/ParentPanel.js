@@ -6,6 +6,33 @@ import { useLanguage } from "../i18n";
 
 const STAT_NAMES = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"];
 
+/** Gender ratio bar: rate = % female, -1 = genderless */
+function GenderRatio({ rate }) {
+  const { t } = useLanguage();
+  if (rate === undefined || rate === null) return null;
+  if (rate < 0) {
+    return <span className="gender-ratio gender-genderless">{t("genderless")}</span>;
+  }
+  const male = (100 - rate).toFixed(1).replace(/\.0$/, '');
+  const female = rate.toFixed(1).replace(/\.0$/, '');
+  return (
+    <div className="gender-ratio">
+      <div className="gender-bar">
+        <div className="gender-male" style={{ width: `${100 - rate}%` }}>
+          {100 - rate >= 15 && <span>♂ {male}%</span>}
+        </div>
+        <div className="gender-female" style={{ width: `${rate}%` }}>
+          {rate >= 15 && <span>♀ {female}%</span>}
+        </div>
+      </div>
+      {100 - rate < 15 && rate < 15 ? null :
+        (100 - rate < 15 ? <span className="gender-label-outside gender-male-text">♂ {male}%</span> :
+        rate < 15 ? <span className="gender-label-outside gender-female-text">♀ {female}%</span> : null)
+      }
+    </div>
+  );
+}
+
 /**
  * ParentPanel — One parent's config: Pokemon search, IVs, held item, nature, ability.
  *
@@ -127,6 +154,7 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
             <span className="preview-egg-groups">
               {t("eggGroups")}: {details.egg_groups.map((g) => g.name).join(", ")}
             </span>
+            <GenderRatio rate={details.gender_rate} />
           </div>
           <button className="btn-preview-clear" onClick={handleClear} title={t("clear")} type="button">✕</button>
         </div>
