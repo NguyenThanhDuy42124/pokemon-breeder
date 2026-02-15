@@ -37,7 +37,7 @@ export default function ResultsPanel({ results, loading, error }) {
     );
   }
 
-  const { parent_a, parent_b, held_item_a, held_item_b, inherited_count, results: rows, nature_info, ability_info, target_iv_result } = results;
+  const { parent_a, parent_b, held_item_a, held_item_b, inherited_count, results: rows, nature_info, ability_info, target_iv_result, offspring_name, offspring_id, offspring_sprite_url } = results;
 
   return (
     <div className="results-panel">
@@ -55,6 +55,28 @@ export default function ResultsPanel({ results, loading, error }) {
           {t("ivsInherited", { count: inherited_count })}
         </span>
       </div>
+
+      {/* Offspring Prediction */}
+      {offspring_name && (
+        <div className="info-card offspring-card">
+          <h4>{t("offspringPrediction")}</h4>
+          <div className="offspring-preview">
+            {offspring_sprite_url && (
+              <img
+                src={offspring_sprite_url}
+                alt={offspring_name}
+                className="offspring-sprite"
+              />
+            )}
+            <div className="offspring-info">
+              <span className="offspring-label">{t("offspringWillBe")}</span>
+              <span className="offspring-name">
+                #{offspring_id} {offspring_name}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* IV Probability Table */}
       <div className="results-table-wrapper">

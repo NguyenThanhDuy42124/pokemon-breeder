@@ -143,3 +143,6 @@ class BreedingResponse(BaseModel):
     nature_info: Optional[NatureInheritance] = None
     ability_info: Optional[AbilityInheritance] = None
     target_iv_result: Optional[TargetIvResult] = None
+    offspring_name: Optional[str] = None       # species that will hatch
+    offspring_id: Optional[int] = None         # national dex number
+    offspring_sprite_url: Optional[str] = None # sprite image URL

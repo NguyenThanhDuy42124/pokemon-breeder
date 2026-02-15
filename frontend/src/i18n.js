@@ -98,6 +98,8 @@ const translations = {
     targetExact: "Exact match probability",
     vsGeneral: "vs. General {count}/6",
     pokemonNotFound: "No Pokémon found for \"{query}\"",
+    offspringPrediction: "Offspring Prediction",
+    offspringWillBe: "The egg will hatch into",
 
     // Browse / Advanced search
     browsePokemon: "Browse Pokémon",
@@ -197,6 +199,8 @@ const translations = {
     targetExact: "Xác suất chính xác",
     vsGeneral: "so với {count}/6 chung",
     pokemonNotFound: "Không tìm thấy Pokémon \"{query}\"",
+    offspringPrediction: "Dự Đoán Pokemon Con",
+    offspringWillBe: "Trứng sẽ nở ra",
 
     // Browse / Advanced search
     browsePokemon: "Duyệt Pokémon",
