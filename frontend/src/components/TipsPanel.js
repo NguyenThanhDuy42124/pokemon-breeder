@@ -187,7 +187,7 @@ const TIPS_DATA = {
       },
       {
         id: "egg-groups-gender",
-        icon: "♂️♀️",
+        icon: "🥚",
         title: "Egg Groups & Gender",
         subtitle: "Who can breed with whom?",
         sections: [
@@ -552,7 +552,7 @@ const TIPS_DATA = {
       },
       {
         id: "egg-groups-gender",
-        icon: "♂️♀️",
+        icon: "🥚",
         title: "Nhóm Trứng & Giới Tính",
         subtitle: "Ai lai được với ai?",
         sections: [
