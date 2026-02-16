@@ -13,6 +13,7 @@ const EMPTY_PARENT = {
   nature: null,
   ability: null,
   abilityHidden: false,
+  gender: null,
 };
 
 function App() {
@@ -82,6 +83,8 @@ function App() {
         breeding_with_ditto: parentA.pokemonId === 132 || parentB.pokemonId === 132,
         target_ivs: targetIvs,
         lang: lang,
+        parent_a_gender: parentA.gender,
+        parent_b_gender: parentB.gender,
       };
       const data = await calculateBreeding(payload);
       setResults(data);

@@ -634,6 +634,68 @@ body {
   font-size: 0.9rem;
 }
 
+/* ── Gender Selector ── */
+.gender-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.gender-selector-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.gender-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.gender-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-xs);
+  border: 2px solid var(--border);
+  background: var(--bg);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gender-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.gender-btn-male.active {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.gender-btn-female.active {
+  border-color: #ec4899;
+  background: rgba(236, 72, 153, 0.15);
+  color: #ec4899;
+}
+
+.gender-btn:not(:disabled):hover {
+  border-color: var(--accent);
+}
+
+.gender-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* ══════════════════════════════════════════════════════════
    IV Section — Toggle Pills
    ══════════════════════════════════════════════════════════ */

@@ -464,20 +464,29 @@ def breeding_calculate(req: BreedingRequest, db: Session = Depends(get_db)):
     # ── Determine offspring species ──
     # Rule: offspring is the non-Ditto parent's species.
     # In normal ♂×♀ breeding, offspring is the female's species.
-    # (Note: in-game it's the base evolutionary form, but we show
-    #  the parent species since we don't have evolution chain data.)
     if a_is_ditto:
         offspring = parent_b
     elif b_is_ditto:
         offspring = parent_a
     else:
         # Normal breeding: female parent determines species.
-        # gender_rate = % female chance. Higher = more likely female.
-        # If parent_a is more likely female, offspring = parent_a.
-        if parent_a.gender_rate >= parent_b.gender_rate:
+        # Use user-selected gender if provided, else guess by gender_rate.
+        a_gender = req.parent_a_gender  # "male", "female", or None
+        b_gender = req.parent_b_gender
+        if a_gender == "female":
+            offspring = parent_a
+        elif b_gender == "female":
+            offspring = parent_b
+        elif a_gender == "male":
+            offspring = parent_b
+        elif b_gender == "male":
             offspring = parent_a
         else:
-            offspring = parent_b
+            # Fallback: higher gender_rate = more likely female
+            if parent_a.gender_rate >= parent_b.gender_rate:
+                offspring = parent_a
+            else:
+                offspring = parent_b
 
     result.offspring_name = offspring.name
     result.offspring_id = offspring.id

@@ -91,13 +91,14 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
       nature: null,
       ability: null,
       abilityHidden: false,
+      gender: null,
     });
   }
 
   function handleClear() {
     setNotFoundQuery(null);
     setDetails(null);
-    update({ pokemonId: null, nature: null, ability: null, abilityHidden: false });
+    update({ pokemonId: null, nature: null, ability: null, abilityHidden: false, gender: null });
   }
 
   function handleNotFound(query) {
@@ -106,7 +107,7 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
     } else {
       setNotFoundQuery(query);
       setDetails(null);
-      update({ pokemonId: null, nature: null, ability: null, abilityHidden: false });
+      update({ pokemonId: null, nature: null, ability: null, abilityHidden: false, gender: null });
     }
   }
 
@@ -157,6 +158,34 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
             <GenderRatio rate={details.gender_rate} />
           </div>
           <button className="btn-preview-clear" onClick={handleClear} title={t("clear")} type="button">✕</button>
+        </div>
+      )}
+
+      {/* Gender selector — shown for non-genderless, non-Ditto Pokemon */}
+      {details && details.gender_rate >= 0 && !details.is_ditto && (
+        <div className="gender-selector">
+          <label className="gender-selector-label">{t("genderLabel")}</label>
+          <div className="gender-btns">
+            <button
+              type="button"
+              className={`gender-btn gender-btn-male${value.gender === "male" ? " active" : ""}`}
+              onClick={() => update({ gender: value.gender === "male" ? null : "male" })}
+              disabled={details.gender_rate === 100}
+              title={details.gender_rate === 100 ? t("femaleOnly") : "♂"}
+            >
+              ♂
+            </button>
+            <button
+              type="button"
+              className={`gender-btn gender-btn-female${value.gender === "female" ? " active" : ""}`}
+              onClick={() => update({ gender: value.gender === "female" ? null : "female" })}
+              disabled={details.gender_rate === 0}
+              title={details.gender_rate === 0 ? t("maleOnly") : "♀"}
+            >
+              ♀
+            </button>
+          </div>
+          <span className="gender-note">{t("genderNote")}</span>
         </div>
       )}
 

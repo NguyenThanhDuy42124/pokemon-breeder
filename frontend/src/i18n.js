@@ -100,6 +100,10 @@ const translations = {
     pokemonNotFound: "No Pokémon found for \"{query}\"",
     offspringPrediction: "Offspring Prediction",
     offspringWillBe: "The egg will hatch into",
+    genderLabel: "Gender",
+    genderNote: "\u2640 determines offspring species when cross-species",
+    maleOnly: "Male only",
+    femaleOnly: "Female only",
 
     // Browse / Advanced search
     browsePokemon: "Browse Pokémon",
@@ -201,6 +205,10 @@ const translations = {
     pokemonNotFound: "Không tìm thấy Pokémon \"{query}\"",
     offspringPrediction: "Dự Đoán Pokemon Con",
     offspringWillBe: "Trứng sẽ nở ra",
+    genderLabel: "Giới tính",
+    genderNote: "♀ quyết định loài con khi khác loài",
+    maleOnly: "Chỉ đực",
+    femaleOnly: "Chỉ cái",
 
     // Browse / Advanced search
     browsePokemon: "Duyệt Pokémon",

@@ -95,6 +95,8 @@ class BreedingRequest(BaseModel):
     breeding_with_ditto: bool = False         # is one parent a Ditto?
     target_ivs: Optional[list[bool]] = None   # desired IV spread, e.g. [T,T,T,T,T,F] = 5IV -Spe
     lang: str = "en"                          # language for explanations: "en" or "vi"
+    parent_a_gender: Optional[str] = None     # "male" or "female" (user-chosen)
+    parent_b_gender: Optional[str] = None
 
 
 # ── Breeding Result (what the API returns) ───────────────────
