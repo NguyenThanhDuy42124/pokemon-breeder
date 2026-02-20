@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
 import PokemonSearch from "./PokemonSearch";
 import AdvancedSearchPanel from "./AdvancedSearchPanel";
-import { getPokemonDetails } from "../api";
+import { getPokemonDetails, getPokemonForms } from "../api";
 import { useLanguage } from "../i18n";
 
 const STAT_NAMES = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"];
+
+/** Format region name for display: "alola" → "Alola", "galar" → "Galar" */
+function formatRegion(region) {
+  if (!region) return "Base";
+  return region.charAt(0).toUpperCase() + region.slice(1);
+}
 
 /** Gender ratio bar: rate = % female, -1 = genderless */
 function GenderRatio({ rate }) {
@@ -49,6 +55,8 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
   const [details, setDetails] = useState(null);
   const [notFoundQuery, setNotFoundQuery] = useState(null);
   const [showBrowse, setShowBrowse] = useState(false);
+  const [forms, setForms] = useState([]);       // available regional forms
+  const [activeFormId, setActiveFormId] = useState(null);  // currently selected form ID
 
   const HELD_ITEMS = [
     { value: "none", label: t("itemNone") },
@@ -66,6 +74,8 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
   useEffect(() => {
     if (!value.pokemonId) {
       setDetails(null);
+      setForms([]);
+      setActiveFormId(null);
       onEggGroupsChange && onEggGroupsChange([]);
       return;
     }
@@ -73,12 +83,27 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
     getPokemonDetails(value.pokemonId).then((d) => {
       if (!cancelled) {
         setDetails(d);
-        // Ditto breeds with anything — don't lock partner's egg groups
+        setActiveFormId(value.pokemonId);
         onEggGroupsChange && onEggGroupsChange(d.is_ditto ? [] : (d.egg_groups || []));
       }
     }).catch(() => {});
+    // Also fetch available forms
+    getPokemonForms(value.pokemonId).then((f) => {
+      if (!cancelled) setForms(f || []);
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, [value.pokemonId, onEggGroupsChange]);
+
+  function handleFormSwitch(formId) {
+    if (formId === activeFormId) return;
+    setActiveFormId(formId);
+    // Load details for the selected form and update parent state
+    getPokemonDetails(formId).then((d) => {
+      setDetails(d);
+      onEggGroupsChange && onEggGroupsChange(d.is_ditto ? [] : (d.egg_groups || []));
+      onChange({ ...value, pokemonId: formId, ability: null, abilityHidden: false });
+    }).catch(() => {});
+  }
 
   function update(patch) {
     onChange({ ...value, ...patch });
@@ -98,6 +123,8 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
   function handleClear() {
     setNotFoundQuery(null);
     setDetails(null);
+    setForms([]);
+    setActiveFormId(null);
     update({ pokemonId: null, nature: null, ability: null, abilityHidden: false, gender: null });
   }
 
@@ -158,6 +185,26 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
             <GenderRatio rate={details.gender_rate} />
           </div>
           <button className="btn-preview-clear" onClick={handleClear} title={t("clear")} type="button">✕</button>
+        </div>
+      )}
+
+      {/* Regional form selector — shown when forms exist */}
+      {details && forms.length > 1 && (
+        <div className="form-selector">
+          <label className="form-selector-label">{t("regionLabel")}</label>
+          <div className="form-btns">
+            {forms.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={`form-btn${activeFormId === f.id ? " active" : ""}`}
+                onClick={() => handleFormSwitch(f.id)}
+                title={f.name}
+              >
+                {f.form_name ? formatRegion(f.form_name) : t("regionBase")}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

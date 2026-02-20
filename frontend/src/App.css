@@ -696,6 +696,51 @@ body {
   font-style: italic;
 }
 
+/* ── Regional Form Selector ── */
+.form-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.form-selector-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.form-btns {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.form-btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  border: 2px solid var(--border);
+  background: var(--bg);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.form-btn.active {
+  border-color: var(--accent);
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent);
+}
+
+.form-btn:not(.active):hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
 /* ══════════════════════════════════════════════════════════
    IV Section — Toggle Pills
    ══════════════════════════════════════════════════════════ */

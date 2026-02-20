@@ -52,8 +52,20 @@ class PokemonSchema(BaseModel):
     gender_rate: float = 50.0
     is_breedable: bool = True
     is_ditto: bool = False
+    form_name: Optional[str] = None
+    base_species_id: Optional[int] = None
     egg_groups: list[EggGroupSchema] = []
     abilities: list[AbilitySchema] = []
+
+    model_config = {"from_attributes": True}
+
+
+# ── Form Info (for regional form selector) ───────────────────
+class FormInfo(BaseModel):
+    id: int
+    name: str
+    form_name: Optional[str] = None  # None = base form
+    sprite_url: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

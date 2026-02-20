@@ -104,6 +104,8 @@ const translations = {
     genderNote: "\u2640 determines offspring species when cross-species",
     maleOnly: "Male only",
     femaleOnly: "Female only",
+    regionLabel: "Region",
+    regionBase: "Base",
 
     // Browse / Advanced search
     browsePokemon: "Browse Pokémon",
@@ -209,6 +211,8 @@ const translations = {
     genderNote: "♀ quyết định loài con khi khác loài",
     maleOnly: "Chỉ đực",
     femaleOnly: "Chỉ cái",
+    regionLabel: "Vùng miền",
+    regionBase: "Gốc",
 
     // Browse / Advanced search
     browsePokemon: "Duyệt Pokémon",

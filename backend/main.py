@@ -38,6 +38,7 @@ from schemas import (
     AbilitySchema,
     BreedingRequest,
     BreedingResponse,
+    FormInfo,
 )
 from breeding import calculate_breeding
 from auto_update import check_and_update
@@ -234,6 +235,47 @@ def browse_pokemon(
 # ════════════════════════════════════════════════════════════
 # API 2: GET POKEMON DETAILS
 # ════════════════════════════════════════════════════════════
+
+@app.get(
+    "/api/pokemon/{pokemon_id}/forms",
+    response_model=list[FormInfo],
+    tags=["Pokemon"],
+)
+def get_pokemon_forms(pokemon_id: int, db: Session = Depends(get_db)):
+    """
+    Get available regional forms for a base Pokemon.
+    Returns the base form + any regional variants (Alolan, Galarian, etc.)
+    Only returns forms if regional variants actually exist.
+    """
+    # Check if this pokemon IS a regional form → use its base_species_id
+    pokemon = db.query(Pokemon).filter(Pokemon.id == pokemon_id).first()
+    if not pokemon:
+        return []
+
+    base_id = pokemon.base_species_id or pokemon_id
+
+    # Find all regional forms of this base species
+    forms = (
+        db.query(Pokemon)
+        .filter(Pokemon.base_species_id == base_id)
+        .order_by(Pokemon.id)
+        .all()
+    )
+
+    if not forms:
+        return []  # No regional forms exist
+
+    # Include the base form first
+    base = db.query(Pokemon).filter(Pokemon.id == base_id).first()
+    result = []
+    if base:
+        result.append(FormInfo(id=base.id, name=base.name, form_name=None, sprite_url=base.sprite_url))
+
+    for f in forms:
+        result.append(FormInfo(id=f.id, name=f.name, form_name=f.form_name, sprite_url=f.sprite_url))
+
+    return result
+
 
 @app.get(
     "/api/pokemon/{pokemon_id}",

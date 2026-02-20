@@ -23,6 +23,13 @@ export async function getPokemonDetails(id) {
   return res.json();
 }
 
+// ─── Pokemon Forms (regional variants) ───────────────────
+export async function getPokemonForms(id) {
+  const res = await fetch(`${BASE}/api/pokemon/${id}/forms`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
 // ─── Compatible Breeding Partners ────────────────────────
 export async function getCompatiblePartners(id) {
   const res = await fetch(`${BASE}/api/pokemon/${id}/compatible`);

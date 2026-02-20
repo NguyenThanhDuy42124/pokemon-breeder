@@ -32,12 +32,16 @@ class Pokemon(Base):
     """
     A Pokémon species (e.g. Pikachu, Charizard).
     Stores everything needed for breeding calculations.
+    Regional forms (Alolan, Galarian, etc.) are separate rows
+    linked to their base species via base_species_id.
     """
     __tablename__ = "pokemon"
 
-    id = Column(Integer, primary_key=True, autoincrement=False)   # National Dex number
-    name = Column(String(100), nullable=False, unique=True)       # e.g. "pikachu"
+    id = Column(Integer, primary_key=True, autoincrement=False)   # National Dex number (or 10001+ for forms)
+    name = Column(String(100), nullable=False, unique=True)       # e.g. "pikachu", "vulpix-alola"
     sprite_url = Column(String(255), nullable=True)               # Image URL
+    form_name = Column(String(50), nullable=True)                 # e.g. "alola", "galar", "hisui", "paldea" (NULL = base form)
+    base_species_id = Column(Integer, nullable=True)              # Links to base species id (NULL = is the base form)
 
     # Base Stats (used for display, not directly for breeding math)
     hp = Column(Integer, default=0)
