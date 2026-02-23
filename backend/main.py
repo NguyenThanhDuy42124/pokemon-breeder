@@ -28,6 +28,10 @@ from contextlib import asynccontextmanager
 import os
 import logging
 import threading
+import time
+import datetime
+import subprocess
+import sys
 from database import SessionLocal
 from models import Pokemon, EggGroup, Nature, Ability, pokemon_ability
 from schemas import (
@@ -42,6 +46,15 @@ from schemas import (
 )
 from breeding import calculate_breeding
 from auto_update import check_and_update
+
+# ── Server state tracking ──────────────────────────────────
+SERVER_STARTED_AT = datetime.datetime.utcnow().isoformat()
+SERVER_VERSION = "1.0.0"
+LAST_UPDATE_CHECK = None
+LAST_GIT_PULL = None
+
+# Auto-update interval: every 10 minutes (600 seconds)
+AUTO_UPDATE_INTERVAL = int(os.environ.get("AUTO_UPDATE_INTERVAL", 600))
 
 # Configure logging with timestamp
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -59,20 +72,105 @@ for _uv_logger_name in ("uvicorn", "uvicorn.access", "uvicorn.error"):
         _uv_logger.addHandler(_h)
 
 
-# ── Lifespan: runs auto-update on startup ──────────────────
+# ── Lifespan: runs auto-update on startup + periodic scheduler ──────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Run auto-update check in background on startup."""
-    def run_update():
+    """Run auto-update check on startup and schedule periodic updates."""
+    global LAST_UPDATE_CHECK, LAST_GIT_PULL
+    stop_event = threading.Event()
+
+    def run_initial_update():
+        global LAST_UPDATE_CHECK
         try:
+            ensure_db_columns()
             check_and_update()
+            LAST_UPDATE_CHECK = datetime.datetime.utcnow().isoformat()
         except Exception as e:
             logging.getLogger("auto_update").error(f"Startup update failed: {e}")
 
-    # Run in background thread so server starts immediately
-    thread = threading.Thread(target=run_update, daemon=True)
+    def periodic_update_loop():
+        """Periodically pull from git and run auto-update."""
+        global LAST_UPDATE_CHECK, LAST_GIT_PULL
+        logger = logging.getLogger("auto_update")
+        while not stop_event.is_set():
+            stop_event.wait(AUTO_UPDATE_INTERVAL)
+            if stop_event.is_set():
+                break
+            try:
+                logger.info("=== Periodic Update: Pulling latest code... ===")
+                git_result = git_pull()
+                LAST_GIT_PULL = datetime.datetime.utcnow().isoformat()
+                if git_result:
+                    logger.info(f"Git pull result: {git_result}")
+                # Re-check DB for new Pokemon
+                ensure_db_columns()
+                check_and_update()
+                LAST_UPDATE_CHECK = datetime.datetime.utcnow().isoformat()
+                logger.info(f"=== Periodic Update Complete at {LAST_UPDATE_CHECK} ===")
+            except Exception as e:
+                logger.error(f"Periodic update failed: {e}")
+
+    # Run initial update in background
+    thread = threading.Thread(target=run_initial_update, daemon=True)
     thread.start()
+
+    # Start periodic update loop
+    periodic_thread = threading.Thread(target=periodic_update_loop, daemon=True)
+    periodic_thread.start()
+
     yield
+
+    # Signal the periodic loop to stop
+    stop_event.set()
+
+
+def git_pull():
+    """Run 'git pull' in the project root. Returns output string or None."""
+    try:
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        result = subprocess.run(
+            ["git", "pull"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        output = (result.stdout or "").strip()
+        if result.returncode != 0:
+            err = (result.stderr or "").strip()
+            logging.getLogger("auto_update").warning(f"git pull error: {err}")
+            return f"ERROR: {err}"
+        return output
+    except Exception as e:
+        logging.getLogger("auto_update").warning(f"git pull exception: {e}")
+        return None
+
+
+def ensure_db_columns():
+    """Ensure new columns exist in the DB (safe ALTER TABLE for SQLite)."""
+    import sqlite3
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pokemon_breeding.db")
+    if not os.path.exists(db_path):
+        return
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.execute("PRAGMA table_info(pokemon)")
+        existing = {row[1] for row in cursor.fetchall()}
+        new_cols = [
+            ("form_name", "VARCHAR(50)"),
+            ("base_species_id", "INTEGER"),
+            ("is_baby", "BOOLEAN DEFAULT 0"),
+            ("is_legendary", "BOOLEAN DEFAULT 0"),
+            ("is_mythical", "BOOLEAN DEFAULT 0"),
+        ]
+        for col_name, col_type in new_cols:
+            if col_name not in existing:
+                conn.execute(f"ALTER TABLE pokemon ADD COLUMN {col_name} {col_type}")
+                logging.getLogger("auto_update").info(f"Added missing column: {col_name}")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logging.getLogger("auto_update").warning(f"ensure_db_columns error: {e}")
 
 
 # ── Create the FastAPI app ──────────────────────────────────
@@ -122,6 +220,21 @@ def get_db():
 def root():
     """Quick check that the server is running."""
     return {"status": "ok", "message": "Pokémon Breeding Calculator API"}
+
+
+@app.get("/api/server/status", tags=["Health"])
+def server_status():
+    """
+    Server status endpoint. Frontend polls this to detect restarts.
+    Returns startup time, last update check, and last git pull time.
+    """
+    return {
+        "started_at": SERVER_STARTED_AT,
+        "version": SERVER_VERSION,
+        "last_update_check": LAST_UPDATE_CHECK,
+        "last_git_pull": LAST_GIT_PULL,
+        "update_interval_seconds": AUTO_UPDATE_INTERVAL,
+    }
 
 
 # ════════════════════════════════════════════════════════════

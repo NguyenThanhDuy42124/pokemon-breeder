@@ -75,3 +75,10 @@ export async function browsePokemon(params = {}) {
   if (!res.ok) return { total: 0, pokemon: [] };
   return res.json();
 }
+
+// ─── Server Status (for restart detection) ───────────────
+export async function getServerStatus() {
+  const res = await fetch(`${BASE}/api/server/status`);
+  if (!res.ok) return null;
+  return res.json();
+}

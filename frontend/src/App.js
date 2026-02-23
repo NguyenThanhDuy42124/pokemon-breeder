@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import ParentPanel from "./components/ParentPanel";
 import ResultsPanel from "./components/ResultsPanel";
 import TipsPanel from "./components/TipsPanel";
-import { calculateBreeding, getNatures } from "./api";
+import { calculateBreeding, getNatures, getServerStatus } from "./api";
 import { useLanguage } from "./i18n";
 import "./App.css";
 
@@ -55,6 +55,51 @@ function App() {
   useEffect(() => {
     getNatures().then(setNatures).catch(() => {});
   }, []);
+
+  // Server restart detection: poll /api/server/status every 30s
+  const [serverBanner, setServerBanner] = useState(null); // { type, message }
+  const knownStartedAt = useRef(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkServer() {
+      try {
+        const status = await getServerStatus();
+        if (!status || !mounted) return;
+
+        if (knownStartedAt.current === null) {
+          // First check — just record the startup time
+          knownStartedAt.current = status.started_at;
+        } else if (status.started_at !== knownStartedAt.current) {
+          // Server restarted!
+          knownStartedAt.current = status.started_at;
+          setServerBanner({
+            type: "restart",
+            message: lang === "vi"
+              ? `⚡ Server đã khởi động lại và cập nhật lúc ${new Date(status.started_at + "Z").toLocaleTimeString()}.  Tải lại trang để nhận bản mới nhất!`
+              : `⚡ Server restarted & updated at ${new Date(status.started_at + "Z").toLocaleTimeString()}. Reload for the latest version!`,
+          });
+          // Auto-dismiss after 15s
+          setTimeout(() => { if (mounted) setServerBanner(null); }, 15000);
+        }
+      } catch {
+        // Server unreachable — show offline banner
+        if (mounted && knownStartedAt.current !== null) {
+          setServerBanner({
+            type: "offline",
+            message: lang === "vi"
+              ? "🔄 Server đang khởi động lại, vui lòng đợi..."
+              : "🔄 Server is restarting, please wait...",
+          });
+        }
+      }
+    }
+
+    checkServer();
+    const interval = setInterval(checkServer, 30000); // every 30s
+    return () => { mounted = false; clearInterval(interval); };
+  }, [lang]);
 
   async function handleCalculate() {
     if (!parentA.pokemonId || !parentB.pokemonId) {
@@ -126,6 +171,19 @@ function App() {
           </div>
         </div>
       </header>
+
+      {/* Server restart/update notification banner */}
+      {serverBanner && (
+        <div className={`server-banner server-banner-${serverBanner.type}`}>
+          <span>{serverBanner.message}</span>
+          {serverBanner.type === "restart" && (
+            <button className="server-banner-btn" onClick={() => window.location.reload()}>
+              {lang === "vi" ? "Tải lại" : "Reload"}
+            </button>
+          )}
+          <button className="server-banner-close" onClick={() => setServerBanner(null)}>✕</button>
+        </div>
+      )}
 
       {/* Main content */}
       <main className="app-main">
