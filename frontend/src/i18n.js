@@ -106,6 +106,11 @@ const translations = {
     femaleOnly: "Female only",
     regionLabel: "Region",
     regionBase: "Base",
+    cannotBreed: "Cannot breed",
+    reasonBaby: "Baby Pokémon cannot breed",
+    reasonLegendary: "Legendary Pokémon cannot breed",
+    reasonMythical: "Mythical Pokémon cannot breed",
+    reasonUndiscovered: "Undiscovered Egg Group — cannot breed",
 
     // Browse / Advanced search
     browsePokemon: "Browse Pokémon",
@@ -213,6 +218,11 @@ const translations = {
     femaleOnly: "Chỉ cái",
     regionLabel: "Vùng miền",
     regionBase: "Gốc",
+    cannotBreed: "Không thể breed",
+    reasonBaby: "Pokémon baby không thể breed",
+    reasonLegendary: "Pokémon huyền thoại không thể breed",
+    reasonMythical: "Pokémon thần thoại không thể breed",
+    reasonUndiscovered: "Nhóm trứng Undiscovered — không thể breed",
 
     // Browse / Advanced search
     browsePokemon: "Duyệt Pokémon",

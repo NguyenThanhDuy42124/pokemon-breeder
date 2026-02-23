@@ -188,6 +188,22 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
         </div>
       )}
 
+      {/* Unbreedable warning — red tag */}
+      {details && !details.is_breedable && (
+        <div className="breed-warning">
+          <span className="breed-warning-icon">⚠</span>
+          <span className="breed-warning-text">
+            {details.is_baby
+              ? t("reasonBaby")
+              : details.is_legendary
+                ? t("reasonLegendary")
+                : details.is_mythical
+                  ? t("reasonMythical")
+                  : t("reasonUndiscovered")}
+          </span>
+        </div>
+      )}
+
       {/* Regional form selector — shown when forms exist */}
       {details && forms.length > 1 && (
         <div className="form-selector">

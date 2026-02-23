@@ -696,6 +696,42 @@ body {
   font-style: italic;
 }
 
+/* ── Unbreedable Warning Tag ── */
+.breed-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1.5px solid rgba(220, 38, 38, 0.45);
+  color: #dc2626;
+  font-size: 0.88rem;
+  font-weight: 600;
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+[data-theme="light"] .breed-warning {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #b91c1c;
+}
+
+.breed-warning-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.breed-warning-text {
+  line-height: 1.3;
+}
+
+@keyframes warningPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
 /* ── Regional Form Selector ── */
 .form-selector {
   display: flex;

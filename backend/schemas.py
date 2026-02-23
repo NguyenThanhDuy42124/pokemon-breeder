@@ -52,6 +52,9 @@ class PokemonSchema(BaseModel):
     gender_rate: float = 50.0
     is_breedable: bool = True
     is_ditto: bool = False
+    is_baby: bool = False
+    is_legendary: bool = False
+    is_mythical: bool = False
     form_name: Optional[str] = None
     base_species_id: Optional[int] = None
     egg_groups: list[EggGroupSchema] = []

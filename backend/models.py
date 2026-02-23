@@ -61,6 +61,11 @@ class Pokemon(Base):
     # Is this Ditto? (Ditto can breed with anything)
     is_ditto = Column(Boolean, default=False)
 
+    # Species classification flags (for warning messages)
+    is_baby = Column(Boolean, default=False)        # e.g. Pichu, Cleffa, Togepi
+    is_legendary = Column(Boolean, default=False)   # e.g. Articuno, Mewtwo, Lugia
+    is_mythical = Column(Boolean, default=False)     # e.g. Mew, Celebi, Jirachi
+
     # --- Relationships ---
     egg_groups = relationship(
         "EggGroup",
