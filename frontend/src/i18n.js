@@ -111,6 +111,9 @@ const translations = {
     reasonLegendary: "Legendary Pokémon cannot breed",
     reasonMythical: "Mythical Pokémon cannot breed",
     reasonUndiscovered: "Undiscovered Egg Group — cannot breed",
+    reasonBabyShort: "Baby",
+    reasonLegendaryShort: "Legendary",
+    reasonMythicalShort: "Mythical",
 
     // Browse / Advanced search
     browsePokemon: "Browse Pokémon",
@@ -223,6 +226,9 @@ const translations = {
     reasonLegendary: "Pokémon huyền thoại không thể breed",
     reasonMythical: "Pokémon thần thoại không thể breed",
     reasonUndiscovered: "Nhóm trứng Undiscovered — không thể breed",
+    reasonBabyShort: "Baby",
+    reasonLegendaryShort: "Huyền thoại",
+    reasonMythicalShort: "Thần thoại",
 
     // Browse / Advanced search
     browsePokemon: "Duyệt Pokémon",

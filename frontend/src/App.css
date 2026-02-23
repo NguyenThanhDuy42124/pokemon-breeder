@@ -1611,6 +1611,30 @@ body {
   font-weight: 500;
 }
 
+/* Unbreedable Pokemon in browse grid */
+.advanced-item.unbreedable {
+  opacity: 0.7;
+  position: relative;
+}
+
+.advanced-item.unbreedable .advanced-sprite {
+  filter: grayscale(0.4);
+}
+
+.advanced-unbreedable-tag {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: #dc2626;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
 .advanced-loading,
 .advanced-not-found {
   text-align: center;

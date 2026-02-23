@@ -197,7 +197,7 @@ def browse_pokemon(
 
     Returns { total, pokemon: [...] }
     """
-    query = db.query(Pokemon).filter(Pokemon.is_breedable == True)
+    query = db.query(Pokemon)
 
     if name and name.strip():
         query = query.filter(Pokemon.name.contains(name.lower().strip()))
@@ -226,7 +226,15 @@ def browse_pokemon(
     return {
         "total": total,
         "pokemon": [
-            {"id": p.id, "name": p.name, "sprite_url": p.sprite_url}
+            {
+                "id": p.id,
+                "name": p.name,
+                "sprite_url": p.sprite_url,
+                "is_breedable": p.is_breedable,
+                "is_baby": p.is_baby,
+                "is_legendary": p.is_legendary,
+                "is_mythical": p.is_mythical,
+            }
             for p in results
         ],
     }

@@ -160,7 +160,7 @@ export default function AdvancedSearchPanel({ open, onClose, onSelect, lockedEgg
               {results.map((p) => (
                 <div
                   key={p.id}
-                  className="advanced-item"
+                  className={`advanced-item${!p.is_breedable ? " unbreedable" : ""}`}
                   onClick={() => handleSelect(p)}
                 >
                   {p.sprite_url && (
@@ -172,6 +172,11 @@ export default function AdvancedSearchPanel({ open, onClose, onSelect, lockedEgg
                   )}
                   <span className="advanced-id">#{p.id}</span>
                   <span className="advanced-name-text">{p.name}</span>
+                  {!p.is_breedable && (
+                    <span className="advanced-unbreedable-tag">
+                      {p.is_baby ? t("reasonBabyShort") : p.is_legendary ? t("reasonLegendaryShort") : p.is_mythical ? t("reasonMythicalShort") : t("cannotBreed")}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
