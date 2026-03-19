@@ -211,12 +211,9 @@ export default function AdvancedSearchPanel({ open, onClose, onSelect, lockedEgg
             >
               ← {t("prev") || "Prev"}
             </button>
-            <span className="advanced-page-info">
-              {page + 1} / {totalPages}
-            </span>
             <div className="advanced-page-jump">
               <label htmlFor="page-jump-input" className="advanced-page-jump-label">
-                {t("goToPage")}
+                {t("pageLabel")}
               </label>
               <input
                 id="page-jump-input"
@@ -233,13 +230,7 @@ export default function AdvancedSearchPanel({ open, onClose, onSelect, lockedEgg
                   }
                 }}
               />
-              <button
-                type="button"
-                className="advanced-page-btn"
-                onClick={handleJumpToPage}
-              >
-                {t("go")}
-              </button>
+              <span className="advanced-page-total">/{totalPages}</span>
             </div>
             <button
               disabled={page >= totalPages - 1}
