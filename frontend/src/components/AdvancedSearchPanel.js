@@ -36,6 +36,7 @@ export default function AdvancedSearchPanel({ open, onClose, onSelect, lockedEgg
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
+  const [pageInput, setPageInput] = useState("1");
 
   // Fetch egg groups once
   useEffect(() => {
@@ -46,6 +47,11 @@ export default function AdvancedSearchPanel({ open, onClose, onSelect, lockedEgg
   useEffect(() => {
     setPage(0);
   }, [name, eggGroupId, region]);
+
+  // Keep input synced with current page
+  useEffect(() => {
+    setPageInput(String(page + 1));
+  }, [page]);
 
   // Debounced fetch when any filter or page changes
   useEffect(() => {
@@ -89,6 +95,18 @@ export default function AdvancedSearchPanel({ open, onClose, onSelect, lockedEgg
   function handleSelect(pokemon) {
     onSelect(pokemon);
     onClose();
+  }
+
+  function handleJumpToPage() {
+    if (totalPages <= 1) return;
+    const parsed = Number.parseInt(pageInput, 10);
+    if (Number.isNaN(parsed)) {
+      setPageInput(String(page + 1));
+      return;
+    }
+    const clamped = Math.min(Math.max(parsed, 1), totalPages);
+    setPage(clamped - 1);
+    setPageInput(String(clamped));
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -196,6 +214,33 @@ export default function AdvancedSearchPanel({ open, onClose, onSelect, lockedEgg
             <span className="advanced-page-info">
               {page + 1} / {totalPages}
             </span>
+            <div className="advanced-page-jump">
+              <label htmlFor="page-jump-input" className="advanced-page-jump-label">
+                {t("goToPage")}
+              </label>
+              <input
+                id="page-jump-input"
+                className="advanced-page-input"
+                type="number"
+                min="1"
+                max={totalPages}
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleJumpToPage();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="advanced-page-btn"
+                onClick={handleJumpToPage}
+              >
+                {t("go")}
+              </button>
+            </div>
             <button
               disabled={page >= totalPages - 1}
               onClick={() => setPage((p) => p + 1)}

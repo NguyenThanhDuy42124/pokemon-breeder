@@ -1749,6 +1749,35 @@ body {
   font-weight: 500;
 }
 
+.advanced-page-jump {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.advanced-page-jump-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.advanced-page-input {
+  width: 70px;
+  padding: 0.35rem 0.45rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.84rem;
+  font-family: var(--font);
+  text-align: center;
+}
+
+.advanced-page-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 /* ══════════════════════════════════════════════════════════
    Tips Sidebar Panel
    ══════════════════════════════════════════════════════════ */
