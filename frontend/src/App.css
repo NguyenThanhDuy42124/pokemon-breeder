@@ -59,27 +59,27 @@
 
 /* ── Light Theme (inspired by Pokemon Database — warm grays, soft contrast) ── */
 [data-theme="light"] {
-  --bg:            #f8f3ee;
-  --bg-subtle:     #f1e6dc;
-  --surface:       #fffdf8;
-  --surface2:      #f9efe4;
-  --surface-glass: rgba(255, 253, 248, 0.92);
-  --header-bg:     #ffffff;
-  --header-text:   #b71f1f;
-  --header-muted:  #8f5656;
-  --header-btn-bg: #fff5ed;
+  --bg:            #efe6dc;
+  --bg-subtle:     #e4d6c8;
+  --surface:       #f7eee6;
+  --surface2:      #efdfd2;
+  --surface-glass: rgba(247, 238, 230, 0.92);
+  --header-bg:     #f4e8de;
+  --header-text:   #a82727;
+  --header-muted:  #845757;
+  --header-btn-bg: #f2e1d4;
   --header-btn-text: #6d1b1b;
-  --header-btn-border: #e8beb2;
-  --accent:        #d62828;
-  --accent-hover:  #f04a41;
-  --accent-glow:   rgba(214, 40, 40, 0.16);
+  --header-btn-border: #d9b4a4;
+  --accent:        #c53434;
+  --accent-hover:  #dd5248;
+  --accent-glow:   rgba(197, 52, 52, 0.10);
   --primary:       #2c4a9b;
   --primary-hover: #3d63c7;
   --text:          #321a1a;
-  --text-secondary:#6f4242;
-  --text-muted:    #946666;
-  --border:        #ebcfc3;
-  --border-hover:  #e2b8a8;
+  --text-secondary:#664444;
+  --text-muted:    #866262;
+  --border:        #d7bdb0;
+  --border-hover:  #cfa794;
   --success:       #4caf50;
   --success-bg:    rgba(76, 175, 80, 0.08);
   --warning:       #e89a0c;
@@ -87,24 +87,24 @@
   --info:          #3557ad;
   --info-bg:       rgba(53, 87, 173, 0.08);
   --danger-bg:     rgba(214, 40, 40, 0.08);
-  --header-grad-start: #ffffff;
-  --header-grad-mid:   #ffe6e0;
-  --header-grad-end:   #fff7ef;
-  --page-glow-a:       rgba(214, 40, 40, 0.12);
-  --page-glow-b:       rgba(53, 87, 173, 0.12);
-  --card-glow:         rgba(214, 40, 40, 0.08);
-  --card-grad:         linear-gradient(155deg, rgba(255, 255, 255, 0.75), rgba(255, 237, 226, 0.35));
-  --ball-top:          #db3434;
-  --ball-bottom:       #fff8f0;
+  --header-grad-start: #efe0d5;
+  --header-grad-mid:   #ecd8cd;
+  --header-grad-end:   #e6d4c7;
+  --page-glow-a:       rgba(197, 52, 52, 0.06);
+  --page-glow-b:       rgba(53, 87, 173, 0.07);
+  --card-glow:         rgba(197, 52, 52, 0.05);
+  --card-grad:         linear-gradient(155deg, rgba(255, 248, 241, 0.52), rgba(236, 219, 206, 0.38));
+  --ball-top:          #ca3f3f;
+  --ball-bottom:       #efe4d9;
   --ball-ring:         #1f2937;
-  --shadow:        0 10px 26px rgba(144, 66, 66, 0.10);
-  --shadow-lg:     0 20px 48px rgba(125, 55, 55, 0.14);
-  --shadow-glow:   0 0 12px var(--accent-glow);
-  --pokeball-opacity: 0.025;
+  --shadow:        0 8px 18px rgba(102, 68, 56, 0.09);
+  --shadow-lg:     0 16px 34px rgba(92, 58, 50, 0.12);
+  --shadow-glow:   0 0 8px var(--accent-glow);
+  --pokeball-opacity: 0.018;
   --overlay-bg:    rgba(0, 0, 0, 0.35);
-  --scrollbar-track: #f1e6dc;
-  --scrollbar-thumb: #dfb2a3;
-  --scrollbar-hover: #c98570;
+  --scrollbar-track: #e6d6c9;
+  --scrollbar-thumb: #c8a394;
+  --scrollbar-hover: #b58273;
 }
 
 /* ── Base Reset ── */
