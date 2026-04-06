@@ -247,7 +247,7 @@ body {
   content: '';
   position: absolute;
   left: 50%;
-  bottom: -30px;
+  bottom: -36px;
   transform: translateX(-50%);
   width: 58px;
   height: 58px;
@@ -2249,7 +2249,7 @@ body {
   .app-header::after {
     width: 52px;
     height: 52px;
-    bottom: -26px;
+    bottom: -31px;
   }
 
   .app-header h1 {
@@ -2386,7 +2386,7 @@ body {
     width: 46px;
     height: 46px;
     border-width: 4px;
-    bottom: -22px;
+    bottom: -27px;
   }
 
   .app-header h1 {
