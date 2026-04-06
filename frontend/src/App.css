@@ -2249,7 +2249,7 @@ body {
   .app-header::after {
     width: 52px;
     height: 52px;
-    bottom: -22px;
+    bottom: -26px;
   }
 
   .app-header h1 {
@@ -2389,7 +2389,7 @@ body {
     width: 46px;
     height: 46px;
     border-width: 4px;
-    bottom: -18px;
+    bottom: -23px;
   }
 
   .app-header h1 {
