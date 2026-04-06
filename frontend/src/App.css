@@ -234,7 +234,7 @@ body {
    ══════════════════════════════════════════════════════════ */
 .app-header {
   text-align: center;
-  padding: 2rem 1.5rem 1.5rem;
+  padding: 2rem 1.5rem 2.4rem;
   background: linear-gradient(135deg, var(--header-grad-start), var(--header-grad-mid), var(--header-grad-end));
   border-bottom: 4px solid var(--ball-ring);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
@@ -247,7 +247,7 @@ body {
   content: '';
   position: absolute;
   left: 50%;
-  bottom: -16px;
+  bottom: -30px;
   transform: translateX(-50%);
   width: 58px;
   height: 58px;
@@ -2243,7 +2243,13 @@ body {
    ══════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .app-header {
-    padding: 1.5rem 1rem 1rem;
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  .app-header::after {
+    width: 52px;
+    height: 52px;
+    bottom: -26px;
   }
 
   .app-header h1 {
@@ -2373,7 +2379,14 @@ body {
 
 @media (max-width: 480px) {
   .app-header {
-    padding: 1rem 0.8rem 0.8rem;
+    padding: 1rem 0.8rem 1.8rem;
+  }
+
+  .app-header::after {
+    width: 46px;
+    height: 46px;
+    border-width: 4px;
+    bottom: -22px;
   }
 
   .app-header h1 {
