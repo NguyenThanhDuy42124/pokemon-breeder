@@ -30,6 +30,27 @@ export async function getPokemonForms(id) {
   return res.json();
 }
 
+// ─── Smogon Build Templates (seeded local data) ───────────
+export async function getSmogonBuilds(id, params = {}) {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== "") qs.set(k, v);
+  });
+  const res = await fetch(`${BASE}/api/pokemon/${id}/smogon-builds?${qs.toString()}`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getSmogonBuildOptions(id, params = {}) {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== "") qs.set(k, v);
+  });
+  const res = await fetch(`${BASE}/api/pokemon/${id}/smogon-options?${qs.toString()}`);
+  if (!res.ok) return { generations: [], formats: [] };
+  return res.json();
+}
+
 // ─── Compatible Breeding Partners ────────────────────────
 export async function getCompatiblePartners(id) {
   const res = await fetch(`${BASE}/api/pokemon/${id}/compatible`);
@@ -47,6 +68,20 @@ export async function calculateBreeding(payload) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || "Calculation failed");
+  }
+  return res.json();
+}
+
+// ─── Rule-based Breeding Planner ─────────────────────────
+export async function getBreedingRoadmap(payload) {
+  const res = await fetch(`${BASE}/api/planner/roadmap`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Planner failed");
   }
   return res.json();
 }

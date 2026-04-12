@@ -27,13 +27,12 @@ from sqlalchemy import or_
 from contextlib import asynccontextmanager
 import os
 import logging
+import json
 import threading
-import time
 import datetime
 import subprocess
-import sys
 from database import SessionLocal
-from models import Pokemon, EggGroup, Nature, Ability, pokemon_ability
+from models import Pokemon, EggGroup, Nature, Ability, SmogonBuild, pokemon_ability
 from schemas import (
     PokemonSchema,
     PokemonSearchResult,
@@ -43,9 +42,15 @@ from schemas import (
     BreedingRequest,
     BreedingResponse,
     FormInfo,
+    SmogonBuildSchema,
+    PlannerRequest,
+    PlannerResponse,
+    PlannerStepSchema,
 )
 from breeding import calculate_breeding
 from auto_update import check_and_update
+from planner import generate_roadmap
+from runtime_sync import run_runtime_sync
 
 # ── Server state tracking ──────────────────────────────────
 SERVER_STARTED_AT = datetime.datetime.utcnow().isoformat()
@@ -83,7 +88,10 @@ async def lifespan(app: FastAPI):
         global LAST_UPDATE_CHECK
         try:
             ensure_db_columns()
+            ensure_performance_indexes()
             check_and_update()
+            sync_result = run_runtime_sync(reason="startup")
+            logging.getLogger("auto_update").info(f"runtime sync (startup): {sync_result}")
             LAST_UPDATE_CHECK = datetime.datetime.utcnow().isoformat()
         except Exception as e:
             logging.getLogger("auto_update").error(f"Startup update failed: {e}")
@@ -104,7 +112,15 @@ async def lifespan(app: FastAPI):
                     logger.info(f"Git pull result: {git_result}")
                 # Re-check DB for new Pokemon
                 ensure_db_columns()
+                ensure_performance_indexes()
                 check_and_update()
+
+                # Run full runtime sync only when pull fetched new commits.
+                pull_changed = bool(git_result) and ("already up to date" not in git_result.lower())
+                if pull_changed:
+                    sync_result = run_runtime_sync(reason="post-pull")
+                    logger.info(f"runtime sync (post-pull): {sync_result}")
+
                 LAST_UPDATE_CHECK = datetime.datetime.utcnow().isoformat()
                 logger.info(f"=== Periodic Update Complete at {LAST_UPDATE_CHECK} ===")
             except Exception as e:
@@ -171,6 +187,29 @@ def ensure_db_columns():
         conn.close()
     except Exception as e:
         logging.getLogger("auto_update").warning(f"ensure_db_columns error: {e}")
+
+
+def ensure_performance_indexes():
+    """Create SQLite indexes needed for low-latency planner/build lookups."""
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pokemon_breeding.db")
+    if not os.path.exists(db_path):
+        return
+    try:
+        import sqlite3
+
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_id ON smogon_builds (pokemon_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_generation ON smogon_builds (generation)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_format ON smogon_builds (format)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_format_name ON smogon_builds (format_name)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_slug ON smogon_builds (pokemon_slug)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_move_slug ON move (normalized_name)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_pm_lookup ON pokemon_moves (pokemon_id, move_id, is_egg_move)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_pml_lookup ON pokemon_move_learn (pokemon_id, move_id, learn_method, generation)")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logging.getLogger("auto_update").warning(f"ensure_performance_indexes error: {e}")
 
 
 # ── Create the FastAPI app ──────────────────────────────────
@@ -325,7 +364,7 @@ def browse_pokemon(
             query = query.filter(
                 or_(
                     Pokemon.egg_groups.any(EggGroup.id.in_(ids)),
-                    Pokemon.is_ditto == True,
+                    Pokemon.is_ditto.is_(True),
                 )
             )
 
@@ -351,6 +390,94 @@ def browse_pokemon(
             for p in results
         ],
     }
+
+
+@app.get(
+    "/api/pokemon/{pokemon_id}/smogon-builds",
+    response_model=list[SmogonBuildSchema],
+    tags=["Pokemon"],
+)
+def get_smogon_builds(
+    pokemon_id: int,
+    generation: str = Query(None, description="Filter by generation, ex: gen9"),
+    format_name: str = Query(None, description="Filter by format name, ex: ou, monotype"),
+    format_id: str = Query(None, description="Optional exact format id, ex: gen9ou"),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns cached Smogon build templates for the selected Pokemon.
+    Data is fully local (SQLite) after seeding, no runtime Smogon request.
+    """
+    builds_query = db.query(SmogonBuild).filter(SmogonBuild.pokemon_id == pokemon_id)
+    if format_id:
+        builds_query = builds_query.filter(SmogonBuild.format == format_id)
+
+    if generation:
+        builds_query = builds_query.filter(SmogonBuild.generation == generation)
+    if format_name:
+        builds_query = builds_query.filter(SmogonBuild.format_name == format_name)
+
+    builds = builds_query.order_by(SmogonBuild.format.asc(), SmogonBuild.build_name.asc()).all()
+
+    result = []
+    for b in builds:
+        parsed_generation = b.generation or "unknown"
+        parsed_format_name = b.format_name or "unknown"
+
+        try:
+            moves = json.loads(b.moves_json or "[]")
+        except Exception:
+            moves = []
+        try:
+            target_ivs = json.loads(b.target_ivs_json or "[true, true, true, true, true, true]")
+        except Exception:
+            target_ivs = [True, True, True, True, True, True]
+
+        result.append(
+            SmogonBuildSchema(
+                id=b.id,
+                pokemon_id=b.pokemon_id,
+                format=b.format,
+                generation=parsed_generation,
+                format_name=parsed_format_name,
+                build_name=b.build_name,
+                source_url=b.source_url,
+                nature=b.nature,
+                ability=b.ability,
+                item=b.item,
+                moves=moves,
+                target_ivs=target_ivs,
+                requires_hidden_ability=b.requires_hidden_ability,
+            )
+        )
+
+    return result
+
+
+@app.get(
+    "/api/pokemon/{pokemon_id}/smogon-options",
+    tags=["Pokemon"],
+)
+def get_smogon_build_options(
+    pokemon_id: int,
+    generation: str = Query(None, description="Optional generation filter, ex: gen9"),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns available generations and formats for this Pokemon.
+    Used by frontend to lazy-load build options before requesting full build rows.
+    """
+    base_query = db.query(SmogonBuild).filter(SmogonBuild.pokemon_id == pokemon_id)
+    all_rows = base_query.all()
+    generations = sorted({(row.generation or "unknown") for row in all_rows})
+
+    format_query = base_query
+    if generation:
+        format_query = format_query.filter(SmogonBuild.generation == generation)
+    format_rows = format_query.all()
+    formats = sorted({(row.format_name or "unknown") for row in format_rows})
+
+    return {"generations": generations, "formats": formats}
 
 
 # ════════════════════════════════════════════════════════════
@@ -491,7 +618,7 @@ def get_compatible_parents(pokemon_id: int, db: Session = Depends(get_db)):
     if parent.is_ditto:
         compatible = (
             db.query(Pokemon)
-            .filter(Pokemon.is_breedable == True, Pokemon.is_ditto == False)
+            .filter(Pokemon.is_breedable.is_(True), Pokemon.is_ditto.is_(False))
             .order_by(Pokemon.id)
             .all()
         )
@@ -505,14 +632,14 @@ def get_compatible_parents(pokemon_id: int, db: Session = Depends(get_db)):
         .filter(
             Pokemon.egg_groups.any(EggGroup.id.in_(egg_group_ids)),
             Pokemon.id != pokemon_id,        # exclude self
-            Pokemon.is_breedable == True,     # must be breedable
+            Pokemon.is_breedable.is_(True),     # must be breedable
         )
         .order_by(Pokemon.id)
         .all()
     )
 
     # Always include Ditto as an option
-    ditto = db.query(Pokemon).filter(Pokemon.is_ditto == True).first()
+    ditto = db.query(Pokemon).filter(Pokemon.is_ditto.is_(True)).first()
     if ditto and ditto not in compatible:
         compatible.append(ditto)
 
@@ -656,6 +783,34 @@ def breeding_calculate(req: BreedingRequest, db: Session = Depends(get_db)):
     result.offspring_sprite_url = offspring.sprite_url
 
     return result
+
+
+@app.post(
+    "/api/planner/roadmap",
+    response_model=PlannerResponse,
+    tags=["Breeding"],
+)
+def planner_roadmap(req: PlannerRequest, db: Session = Depends(get_db)):
+    """
+    Rule-based breeding roadmap generator.
+    No AI inference; deterministic if/else logic + cached helpers.
+    """
+    steps = generate_roadmap(
+        db=db,
+        pokemon_id=req.pokemon_id,
+        parent_a_id=req.parent_a_id,
+        parent_b_id=req.parent_b_id,
+        parent_a_ivs=req.parent_a_ivs,
+        parent_b_ivs=req.parent_b_ivs,
+        target_nature=req.target_nature,
+        target_ability=req.target_ability,
+        target_ivs=req.target_ivs,
+        target_moves=req.target_moves,
+        requires_hidden_ability=req.requires_hidden_ability,
+        generation=req.generation,
+        lang=req.lang,
+    )
+    return PlannerResponse(steps=[PlannerStepSchema(**s) for s in steps])
 
 
 # ════════════════════════════════════════════════════════════

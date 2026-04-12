@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import ParentPanel from "./components/ParentPanel";
 import ResultsPanel from "./components/ResultsPanel";
 import TipsPanel from "./components/TipsPanel";
-import { calculateBreeding, getNatures, getServerStatus } from "./api";
+import { calculateBreeding, getNatures, getServerStatus, getBreedingRoadmap } from "./api";
 import { useLanguage } from "./i18n";
 import "./App.css";
 
@@ -41,6 +41,8 @@ function App() {
   const [targetIvs, setTargetIvs] = useState([true, true, true, true, true, true]);
   const [natures, setNatures] = useState([]);
   const [results, setResults] = useState(null);
+  const [selectedBuild, setSelectedBuild] = useState(null);
+  const [selectedBuildPokemonId, setSelectedBuildPokemonId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -132,11 +134,42 @@ function App() {
         parent_b_gender: parentB.gender,
       };
       const data = await calculateBreeding(payload);
-      setResults(data);
+
+      let roadmapSteps = [];
+      try {
+        const plannerPayload = {
+          pokemon_id: selectedBuildPokemonId || data.offspring_id || parentA.pokemonId,
+          parent_a_id: parentA.pokemonId,
+          parent_b_id: parentB.pokemonId,
+          parent_a_ivs: parentA.ivs,
+          parent_b_ivs: parentB.ivs,
+          target_nature: selectedBuild?.nature || null,
+          target_ability: selectedBuild?.ability || null,
+          target_ivs: targetIvs,
+          target_moves: selectedBuild?.moves || [],
+          requires_hidden_ability: !!selectedBuild?.requires_hidden_ability,
+          generation: selectedBuild?.generation || null,
+          lang,
+        };
+        const roadmap = await getBreedingRoadmap(plannerPayload);
+        roadmapSteps = roadmap?.steps || [];
+      } catch {
+        roadmapSteps = [];
+      }
+
+      setResults({ ...data, planner_steps: roadmapSteps });
     } catch (err) {
       setError(err.message || t("calcFailed"));
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleBuildApply(build, pokemonId) {
+    setSelectedBuild(build || null);
+    setSelectedBuildPokemonId(pokemonId || null);
+    if (build?.target_ivs && Array.isArray(build.target_ivs) && build.target_ivs.length === 6) {
+      setTargetIvs(build.target_ivs);
     }
   }
 
@@ -196,6 +229,7 @@ function App() {
             natures={natures}
             lockedEggGroups={parentBEggGroups}
             onEggGroupsChange={handleParentAEggGroups}
+            onBuildApply={handleBuildApply}
           />
           <div className="parents-divider">
             <span className="divider-icon">x</span>
@@ -207,6 +241,7 @@ function App() {
             natures={natures}
             lockedEggGroups={parentAEggGroups}
             onEggGroupsChange={handleParentBEggGroups}
+            onBuildApply={handleBuildApply}
           />
         </section>
 

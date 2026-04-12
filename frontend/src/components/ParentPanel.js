@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PokemonSearch from "./PokemonSearch";
 import AdvancedSearchPanel from "./AdvancedSearchPanel";
-import { getPokemonDetails, getPokemonForms } from "../api";
+import { getPokemonDetails, getPokemonForms, getSmogonBuilds, getSmogonBuildOptions } from "../api";
 import { useLanguage } from "../i18n";
 
 const STAT_NAMES = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"];
@@ -50,13 +50,18 @@ function GenderRatio({ rate }) {
  *   lockedEggGroups     — egg groups from the OTHER parent (for compatibility lock)
  *   onEggGroupsChange   — callback to report this parent's egg groups up
  */
-export default function ParentPanel({ label, value, onChange, natures, lockedEggGroups, onEggGroupsChange }) {
+export default function ParentPanel({ label, value, onChange, natures, lockedEggGroups, onEggGroupsChange, onBuildApply }) {
   const { t } = useLanguage();
   const [details, setDetails] = useState(null);
   const [notFoundQuery, setNotFoundQuery] = useState(null);
   const [showBrowse, setShowBrowse] = useState(false);
   const [forms, setForms] = useState([]);       // available regional forms
   const [activeFormId, setActiveFormId] = useState(null);  // currently selected form ID
+  const [builds, setBuilds] = useState([]);
+  const [selectedGeneration, setSelectedGeneration] = useState("");
+  const [selectedFormatName, setSelectedFormatName] = useState("");
+  const [selectedBuildId, setSelectedBuildId] = useState("");
+  const [buildOptions, setBuildOptions] = useState({ generations: [], formats: [] });
 
   const HELD_ITEMS = [
     { value: "none", label: t("itemNone") },
@@ -76,6 +81,11 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
       setDetails(null);
       setForms([]);
       setActiveFormId(null);
+      setBuilds([]);
+      setBuildOptions({ generations: [], formats: [] });
+      setSelectedGeneration("");
+      setSelectedFormatName("");
+      setSelectedBuildId("");
       onEggGroupsChange && onEggGroupsChange([]);
       return;
     }
@@ -91,8 +101,51 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
     getPokemonForms(value.pokemonId).then((f) => {
       if (!cancelled) setForms(f || []);
     }).catch(() => {});
+
+    getSmogonBuildOptions(value.pokemonId).then((meta) => {
+      if (!cancelled) setBuildOptions(meta || { generations: [], formats: [] });
+    }).catch(() => {
+      if (!cancelled) setBuildOptions({ generations: [], formats: [] });
+    });
     return () => { cancelled = true; };
   }, [value.pokemonId, onEggGroupsChange]);
+
+  useEffect(() => {
+    if (!value.pokemonId || !selectedGeneration) {
+      setBuilds([]);
+      setSelectedFormatName("");
+      setSelectedBuildId("");
+      return;
+    }
+
+    let cancelled = false;
+    getSmogonBuildOptions(value.pokemonId, { generation: selectedGeneration }).then((meta) => {
+      if (!cancelled) {
+        setBuildOptions((prev) => ({
+          generations: prev.generations || [],
+          formats: meta?.formats || [],
+        }));
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        setBuildOptions((prev) => ({
+          generations: prev.generations || [],
+          formats: [],
+        }));
+      }
+    });
+
+    getSmogonBuilds(value.pokemonId, { generation: selectedGeneration }).then((rows) => {
+      if (!cancelled) {
+        setBuilds(rows || []);
+        setSelectedBuildId("");
+      }
+    }).catch(() => {
+      if (!cancelled) setBuilds([]);
+    });
+
+    return () => { cancelled = true; };
+  }, [value.pokemonId, selectedGeneration]);
 
   function handleFormSwitch(formId) {
     if (formId === activeFormId) return;
@@ -125,6 +178,11 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
     setDetails(null);
     setForms([]);
     setActiveFormId(null);
+    setBuilds([]);
+    setBuildOptions({ generations: [], formats: [] });
+    setSelectedGeneration("");
+    setSelectedFormatName("");
+    setSelectedBuildId("");
     update({ pokemonId: null, nature: null, ability: null, abilityHidden: false, gender: null });
   }
 
@@ -146,6 +204,36 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
 
   function setAllIvs(val) {
     update({ ivs: [val, val, val, val, val, val] });
+  }
+
+  function handleBuildSelect(buildId) {
+    setSelectedBuildId(buildId);
+    const build = builds.find((b) => String(b.id) === String(buildId));
+    if (!build) return;
+
+    const selectedAbility = (details?.abilities || []).find((a) => a.name === build.ability);
+    update({
+      nature: build.nature || value.nature,
+      ability: build.ability || value.ability,
+      abilityHidden: selectedAbility ? !!selectedAbility.is_hidden : !!build.requires_hidden_ability,
+    });
+
+    if (onBuildApply) {
+      onBuildApply(build, value.pokemonId);
+    }
+  }
+
+  const selectedBuild = builds.find((b) => String(b.id) === String(selectedBuildId));
+  const generationOptions = (buildOptions?.generations || []).filter(Boolean);
+  const formatOptions = (buildOptions?.formats || []).filter(Boolean);
+  const filteredBuilds = (builds || []).filter((b) => {
+    if (selectedGeneration && b.generation !== selectedGeneration) return false;
+    if (selectedFormatName && b.format_name !== selectedFormatName) return false;
+    return true;
+  });
+
+  function fmtBoolIv(v) {
+    return v ? "31" : "x";
   }
 
   return (
@@ -221,6 +309,104 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Smogon template selector */}
+      {details && (
+        <div className="field">
+          <label>{t("sampleBuild")}</label>
+          {builds.length > 0 ? (
+            <>
+              <label className="mini-label">{t("generationLabel")}</label>
+              <select
+                value={selectedGeneration}
+                onChange={(e) => {
+                  setSelectedGeneration(e.target.value);
+                  setSelectedFormatName("");
+                  setSelectedBuildId("");
+                }}
+              >
+                <option value="">{t("selectGeneration")}</option>
+                {generationOptions.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+
+              <label className="mini-label">{t("formatLabel")}</label>
+              <select
+                value={selectedFormatName}
+                onChange={(e) => {
+                  setSelectedFormatName(e.target.value);
+                  setSelectedBuildId("");
+                }}
+                disabled={!selectedGeneration}
+              >
+                <option value="">{t("selectFormat")}</option>
+                {formatOptions.map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+
+              <label className="mini-label">{t("sampleBuild")}</label>
+              <select
+                value={selectedBuildId}
+                onChange={(e) => handleBuildSelect(e.target.value)}
+                disabled={!selectedGeneration || !selectedFormatName}
+              >
+                <option value="">{t("selectSampleBuild")}</option>
+                {filteredBuilds.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.build_name}
+                  </option>
+                ))}
+              </select>
+
+              {selectedBuild && (
+                <div className="build-preview-card">
+                  <div className="build-preview-head">
+                    <strong>{selectedBuild.build_name}</strong>
+                    <span className="build-preview-format">{selectedBuild.format}</span>
+                  </div>
+
+                  <div className="build-preview-meta">
+                    <span><b>{t("nature")}:</b> {selectedBuild.nature || "-"}</span>
+                    <span>
+                      <b>{t("ability")}:</b> {selectedBuild.ability || "-"}
+                      {selectedBuild.requires_hidden_ability ? ` (${t("hiddenAbility")})` : ""}
+                    </span>
+                    <span><b>{t("heldItem")}:</b> {selectedBuild.item || "-"}</span>
+                  </div>
+
+                  {Array.isArray(selectedBuild.moves) && selectedBuild.moves.length > 0 && (
+                    <div className="build-preview-row">
+                      <span className="build-preview-label">{t("movesLabel")}</span>
+                      <div className="build-preview-tags">
+                        {selectedBuild.moves.map((m) => (
+                          <span key={`${selectedBuild.id}-${m}`} className="build-chip">{m}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {Array.isArray(selectedBuild.target_ivs) && selectedBuild.target_ivs.length === 6 && (
+                    <div className="build-preview-row">
+                      <span className="build-preview-label">{t("targetIvs")}</span>
+                      <div className="build-preview-tags">
+                        {STAT_NAMES.map((s, i) => (
+                          <span key={`${selectedBuild.id}-iv-${s}`} className="build-chip iv-chip">
+                            {s}: {fmtBoolIv(selectedBuild.target_ivs[i])}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="build-seed-hint">{t("sampleBuildEmptyHint")}</div>
+          )}
         </div>
       )}
 

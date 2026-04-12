@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -125,3 +125,86 @@ class Nature(Base):
     name = Column(String(50), nullable=False, unique=True)       # e.g. "adamant"
     increased_stat = Column(String(20), nullable=True)            # e.g. "attack" (None = neutral)
     decreased_stat = Column(String(20), nullable=True)            # e.g. "defense" (None = neutral)
+
+
+class Move(Base):
+    """
+    Pokemon move reference.
+    Stored locally so Smogon set move strings can be mapped to stable IDs.
+    """
+    __tablename__ = "move"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False, unique=True)
+    normalized_name = Column(String(120), nullable=False, unique=True, index=True)
+
+
+class PokemonMove(Base):
+    """
+    Links Pokemon to moves and marks whether the move is an Egg Move.
+    Optional source_pokemon_id can store a known breeding source parent.
+    """
+    __tablename__ = "pokemon_moves"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pokemon_id = Column(Integer, ForeignKey("pokemon.id"), nullable=False, index=True)
+    move_id = Column(Integer, ForeignKey("move.id"), nullable=False, index=True)
+    is_egg_move = Column(Boolean, default=False, nullable=False)
+    source_pokemon_id = Column(Integer, ForeignKey("pokemon.id"), nullable=True)
+
+    pokemon = relationship("Pokemon", foreign_keys=[pokemon_id])
+    move = relationship("Move", foreign_keys=[move_id])
+    source_pokemon = relationship("Pokemon", foreign_keys=[source_pokemon_id])
+
+
+class PokemonMoveLearn(Base):
+    """
+    Tracks how a Pokemon can learn a move (egg, level-up, machine, tutor).
+    Used by planner to find potential egg-move passing parents.
+    """
+    __tablename__ = "pokemon_move_learn"
+    __table_args__ = (
+        UniqueConstraint("pokemon_id", "move_id", "learn_method", "generation", name="uq_pml_unique"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pokemon_id = Column(Integer, ForeignKey("pokemon.id"), nullable=False, index=True)
+    move_id = Column(Integer, ForeignKey("move.id"), nullable=False, index=True)
+    learn_method = Column(String(40), nullable=False, index=True)  # egg, level-up, machine, tutor...
+    generation = Column(String(20), nullable=False, default="unknown", index=True)  # ex: gen9
+
+    pokemon = relationship("Pokemon", foreign_keys=[pokemon_id])
+    move = relationship("Move", foreign_keys=[move_id])
+
+
+class SmogonBuild(Base):
+    """
+    Cached build templates parsed from Smogon JSON sets.
+    Data is seeded offline to keep runtime lightweight on low-resource hosts.
+    """
+    __tablename__ = "smogon_builds"
+    __table_args__ = (
+        UniqueConstraint("pokemon_id", "format", "build_name", name="uq_smogon_build_unique"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pokemon_id = Column(Integer, ForeignKey("pokemon.id"), nullable=False, index=True)
+    pokemon_slug = Column(String(120), nullable=False, default="", index=True)
+
+    format = Column(String(40), nullable=False, default="gen9ou", index=True)
+    generation = Column(String(20), nullable=False, default="gen9", index=True)
+    format_name = Column(String(40), nullable=False, default="ou", index=True)
+    format_slug = Column(String(64), nullable=False, default="gen9ou", index=True)
+    build_name = Column(String(120), nullable=False)
+    source_url = Column(String(255), nullable=True)
+
+    nature = Column(String(50), nullable=True)
+    ability = Column(String(100), nullable=True)
+    item = Column(String(100), nullable=True)
+    moves_json = Column(Text, nullable=False, default="[]")
+    move_slugs_json = Column(Text, nullable=False, default="[]")
+    move_ids_json = Column(Text, nullable=False, default="[]")
+    target_ivs_json = Column(Text, nullable=False, default="[true, true, true, true, true, true]")
+    requires_hidden_ability = Column(Boolean, nullable=False, default=False)
+
+    pokemon = relationship("Pokemon")

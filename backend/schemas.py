@@ -163,3 +163,45 @@ class BreedingResponse(BaseModel):
     offspring_name: Optional[str] = None       # species that will hatch
     offspring_id: Optional[int] = None         # national dex number
     offspring_sprite_url: Optional[str] = None # sprite image URL
+
+
+class SmogonBuildSchema(BaseModel):
+    id: int
+    pokemon_id: int
+    format: str
+    generation: str
+    format_name: str
+    build_name: str
+    source_url: Optional[str] = None
+    nature: Optional[str] = None
+    ability: Optional[str] = None
+    item: Optional[str] = None
+    moves: list[str] = []
+    target_ivs: list[bool] = [True, True, True, True, True, True]
+    requires_hidden_ability: bool = False
+
+
+class PlannerRequest(BaseModel):
+    pokemon_id: int
+    parent_a_id: int
+    parent_b_id: int
+    parent_a_ivs: Optional[list[bool]] = None
+    parent_b_ivs: Optional[list[bool]] = None
+    target_nature: Optional[str] = None
+    target_ability: Optional[str] = None
+    target_ivs: Optional[list[bool]] = None
+    target_moves: list[str] = []
+    requires_hidden_ability: bool = False
+    generation: Optional[str] = None
+    lang: str = "en"
+
+
+class PlannerStepSchema(BaseModel):
+    step: int
+    title: str
+    description: str
+    tags: list[str] = []
+
+
+class PlannerResponse(BaseModel):
+    steps: list[PlannerStepSchema]

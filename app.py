@@ -14,7 +14,9 @@ if os.path.isdir(os.path.join(project_root, ".git")):
     print("==> Syncing code from GitHub...")
     try:
         subprocess.run(["git", "fetch", "origin"], cwd=project_root, timeout=30)
-        subprocess.run(["git", "reset", "--hard", "origin/master"], cwd=project_root, timeout=30)
+        reset_main = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=project_root, timeout=30)
+        if reset_main.returncode != 0:
+            subprocess.run(["git", "reset", "--hard", "origin/master"], cwd=project_root, timeout=30)
         print("==> Code synced successfully!")
     except Exception as e:
         print(f"==> Git sync skipped: {e}")

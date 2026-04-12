@@ -77,6 +77,30 @@ npm start
 
 Open http://localhost:3000 in your browser.
 
+## Runtime Auto-Sync After Pull
+
+Backend da duoc setup de tu dong chay cac buoc sync khi server startup va khi `git pull` co commit moi:
+
+- Auto update Pokemon core data (`auto_update.py`)
+- Auto seed Smogon builds (SQLite cache)
+- Auto seed move-learning/egg-move data
+
+Cau hinh bang bien moi truong:
+
+- `AUTO_RUNTIME_SYNC=1` bat/tat orchestration tong
+- `AUTO_SMOGON_SYNC=1` bat/tat Smogon seed
+- `AUTO_SMOGON_FROM_INDEX=0` neu =1 se quet tat ca format trong index
+- `AUTO_SMOGON_FORMATS=gen9ou,gen9monotype` danh sach format seed khi khong dung from-index
+- `AUTO_MOVE_SYNC=1` bat/tat move-learning seed
+- `AUTO_MOVE_SYNC_ALL=1` neu =1 se quet toan bo Pokemon cho move-learning
+- `AUTO_MOVE_SYNC_LIMIT=1025` limit khi `AUTO_MOVE_SYNC_ALL=0`
+- `AUTO_RUNTIME_SYNC_TIMEOUT_SEC=1800` timeout cho moi script seed
+
+Luu y cho host yeu (1 vCPU, 1GB RAM):
+
+- Nen bat dau voi `AUTO_SMOGON_FROM_INDEX=0` va chi seed mot so format can dung.
+- Sau khi seed day du 1 lan, he thong se nho commit da sync va bo qua lan chay lai neu code khong doi.
+
 ## API Endpoints
 
 | Method | Path                          | Description                    |
