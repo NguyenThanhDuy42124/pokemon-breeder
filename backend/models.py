@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table, Text, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table, Text, UniqueConstraint, DateTime, Index
 from sqlalchemy.orm import relationship
 from database import Base
+import datetime
 
 # ============================================================
 # ASSOCIATION TABLES (Many-to-Many relationships)
@@ -185,6 +186,7 @@ class SmogonBuild(Base):
     __tablename__ = "smogon_builds"
     __table_args__ = (
         UniqueConstraint("pokemon_id", "format", "build_name", name="uq_smogon_build_unique"),
+        Index("idx_smogon_pokemon_gen_format", "pokemon_id", "generation", "format"),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -208,3 +210,21 @@ class SmogonBuild(Base):
     requires_hidden_ability = Column(Boolean, nullable=False, default=False)
 
     pokemon = relationship("Pokemon")
+
+
+class CrawlHistory(Base):
+    """Tracks ingestion status per Smogon format for admin progress monitoring."""
+
+    __tablename__ = "crawl_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source = Column(String(50), nullable=False, default="smogon", index=True)
+    format = Column(String(64), nullable=False, unique=True, index=True)
+    generation = Column(String(20), nullable=False, default="unknown", index=True)
+    status = Column(String(20), nullable=False, default="pending", index=True)  # pending/success/failed
+    record_count = Column(Integer, nullable=False, default=0)
+    skipped_count = Column(Integer, nullable=False, default=0)
+    error_log = Column(Text, nullable=True)
+    source_url = Column(String(255), nullable=True)
+    updated_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    last_synced_at = Column(DateTime, nullable=True)

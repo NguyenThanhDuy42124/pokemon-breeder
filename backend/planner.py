@@ -57,6 +57,26 @@ def supports_ability(generation: str | None) -> bool:
     return int(m.group(1)) >= 3
 
 
+@lru_cache(maxsize=16)
+def supports_destiny_knot(generation: str | None) -> bool:
+    if not generation:
+        return True
+    m = re.match(r"gen(\d+)", generation.lower())
+    if not m:
+        return True
+    return int(m.group(1)) >= 6
+
+
+def _egg_group_ids_for_pokemon(db: Session, pokemon_id: int) -> list[int]:
+    return [
+        row[0]
+        for row in db.execute(
+            text("SELECT egg_group_id FROM pokemon_egg_group WHERE pokemon_id = :pokemon_id"),
+            {"pokemon_id": pokemon_id},
+        ).fetchall()
+    ]
+
+
 def find_egg_move_parents(db: Session, target_pokemon_id: int, move_slug: str, generation: str | None = None) -> list[dict]:
     move = db.query(Move).filter(Move.normalized_name == normalize_name(move_slug)).first()
     if not move:
@@ -74,13 +94,7 @@ def find_egg_move_parents(db: Session, target_pokemon_id: int, move_slug: str, g
     if not egg_entry:
         return []
 
-    egg_group_ids = [
-        row[0]
-        for row in db.execute(
-            text("SELECT egg_group_id FROM pokemon_egg_group WHERE pokemon_id = :pokemon_id"),
-            {"pokemon_id": target_pokemon_id},
-        ).fetchall()
-    ]
+    egg_group_ids = _egg_group_ids_for_pokemon(db, target_pokemon_id)
     if not egg_group_ids:
         return []
 
@@ -132,6 +146,83 @@ def find_egg_move_parents(db: Session, target_pokemon_id: int, move_slug: str, g
             }
         )
     return out
+
+
+def find_egg_move_bridge_paths(
+    db: Session,
+    target_pokemon_id: int,
+    move_slug: str,
+    generation: str | None = None,
+) -> list[dict]:
+    """Find one-hop chain breeding paths: source parent -> bridge -> target."""
+    move = db.query(Move).filter(Move.normalized_name == normalize_name(move_slug)).first()
+    if not move:
+        return []
+
+    target_egg_groups = _egg_group_ids_for_pokemon(db, target_pokemon_id)
+    if not target_egg_groups:
+        return []
+
+    # Bridges must be compatible with target and learn the move by egg.
+    bridge_query = (
+        db.query(Pokemon)
+        .join(pokemon_egg_group, pokemon_egg_group.c.pokemon_id == Pokemon.id)
+        .join(
+            PokemonMoveLearn,
+            PokemonMoveLearn.pokemon_id == Pokemon.id,
+        )
+        .filter(
+            pokemon_egg_group.c.egg_group_id.in_(target_egg_groups),
+            Pokemon.id != target_pokemon_id,
+            Pokemon.is_breedable,
+            PokemonMoveLearn.move_id == move.id,
+            PokemonMoveLearn.learn_method == "egg",
+        )
+        .distinct()
+    )
+    if generation:
+        bridge_query = bridge_query.filter(PokemonMoveLearn.generation == generation)
+    bridges = bridge_query.limit(24).all()
+    if not bridges:
+        return []
+
+    results = []
+    for bridge in bridges:
+        bridge_egg_groups = _egg_group_ids_for_pokemon(db, bridge.id)
+        if not bridge_egg_groups:
+            continue
+
+        source_query = (
+            db.query(Pokemon)
+            .join(pokemon_egg_group, pokemon_egg_group.c.pokemon_id == Pokemon.id)
+            .join(PokemonMoveLearn, PokemonMoveLearn.pokemon_id == Pokemon.id)
+            .filter(
+                pokemon_egg_group.c.egg_group_id.in_(bridge_egg_groups),
+                Pokemon.id.notin_([target_pokemon_id, bridge.id]),
+                Pokemon.is_breedable,
+                PokemonMoveLearn.move_id == move.id,
+                PokemonMoveLearn.learn_method.in_(["level-up", "machine", "tutor"]),
+            )
+            .distinct()
+        )
+        if generation:
+            source_query = source_query.filter(PokemonMoveLearn.generation == generation)
+        sources = source_query.limit(5).all()
+        if not sources:
+            continue
+
+        results.append(
+            {
+                "bridge_pokemon_id": bridge.id,
+                "bridge_pokemon_name": bridge.name,
+                "source_candidates": [
+                    {"pokemon_id": s.id, "pokemon_name": s.name}
+                    for s in sources
+                ],
+            }
+        )
+
+    return results[:6]
 
 
 def generate_roadmap(
@@ -210,6 +301,30 @@ def generate_roadmap(
         )
 
         if not parent_candidates:
+            bridge_paths = find_egg_move_bridge_paths(
+                db=db,
+                target_pokemon_id=pokemon_id,
+                move_slug=move_name,
+                generation=generation,
+            )
+            if bridge_paths:
+                bridge_lines = []
+                for path in bridge_paths:
+                    sources = ", ".join([s["pokemon_name"] for s in path["source_candidates"][:3]])
+                    bridge_lines.append(
+                        _t(
+                            lang,
+                            f"{sources} -> {path['bridge_pokemon_name']} -> {target_pokemon.name}",
+                            f"{sources} -> {path['bridge_pokemon_name']} -> {target_pokemon.name}",
+                        )
+                    )
+                egg_move_suggestions.append(
+                    _t(
+                        lang,
+                        f"{move_name} can chain breed via bridge Pokemon:\n" + "\n".join(bridge_lines),
+                        f"{move_name} can chain breed via bridge Pokemon:\n" + "\n".join(bridge_lines),
+                    )
+                )
             continue
 
         top = parent_candidates[:5]
@@ -238,13 +353,22 @@ def generate_roadmap(
     resolved_target_ivs = target_ivs if target_ivs and len(target_ivs) == 6 else [True] * 6
     target_count = sum(1 for v in resolved_target_ivs if v)
 
-    if is_high_iv_target(target_count):
+    if is_high_iv_target(target_count) and supports_destiny_knot(generation):
         iv_tags.append("destiny-knot")
         iv_lines.append(
             _t(
                 lang,
                 "Muc tieu IV cao (>=4). Goi y dung Destiny Knot de tang so IV di truyen len 5/6.",
                 "High IV target (>=4). Use Destiny Knot to increase inherited IVs to 5/6.",
+            )
+        )
+
+    if is_high_iv_target(target_count) and not supports_destiny_knot(generation):
+        iv_lines.append(
+            _t(
+                lang,
+                f"{generation or 'The he nay'} chua co Destiny Knot (5 IV inheritance). Hay uu tien Power Items va parent IV spread.",
+                f"{generation or 'This generation'} does not support Destiny Knot (5 IV inheritance). Prioritize Power Items and parent IV spread.",
             )
         )
 

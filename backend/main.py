@@ -23,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, text
 from sqlalchemy.exc import OperationalError
 from contextlib import asynccontextmanager
 import os
@@ -33,8 +33,9 @@ import threading
 import datetime
 import subprocess
 import time
-from database import SessionLocal
-from models import Pokemon, EggGroup, Nature, Ability, SmogonBuild, pokemon_ability
+from database import SessionLocal, engine, is_sqlite
+from models import Pokemon, EggGroup, Nature, Ability, SmogonBuild, CrawlHistory, pokemon_ability
+from seed_smogon_builds import resolve_format_ids
 from schemas import (
     PokemonSchema,
     PokemonSearchResult,
@@ -166,6 +167,8 @@ def git_pull():
 
 def ensure_db_columns():
     """Ensure new columns exist in the DB (safe ALTER TABLE for SQLite)."""
+    if not is_sqlite:
+        return
     import sqlite3
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pokemon_breeding.db")
     if not os.path.exists(db_path):
@@ -193,44 +196,63 @@ def ensure_db_columns():
 
 
 def ensure_performance_indexes():
-    """Create SQLite indexes needed for low-latency planner/build lookups."""
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pokemon_breeding.db")
-    if not os.path.exists(db_path):
-        return
+    """Create DB indexes needed for low-latency planner/build lookups."""
     try:
-        import sqlite3
+        with engine.begin() as conn:
+            if is_sqlite:
+                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pokemon_breeding.db")
+                if not os.path.exists(db_path):
+                    return
 
-        conn = sqlite3.connect(db_path, timeout=30)
-        conn.execute("PRAGMA busy_timeout=30000")
-        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        existing_tables = {row[0] for row in cursor.fetchall()}
+                conn.exec_driver_sql("PRAGMA busy_timeout=30000")
+                rows = conn.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+                existing_tables = {row[0] for row in rows}
 
-        index_plan = {
-            "smogon_builds": [
-                "CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_id ON smogon_builds (pokemon_id)",
-                "CREATE INDEX IF NOT EXISTS idx_smogon_generation ON smogon_builds (generation)",
-                "CREATE INDEX IF NOT EXISTS idx_smogon_format ON smogon_builds (format)",
-                "CREATE INDEX IF NOT EXISTS idx_smogon_format_name ON smogon_builds (format_name)",
-                "CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_slug ON smogon_builds (pokemon_slug)",
-            ],
-            "move": [
-                "CREATE INDEX IF NOT EXISTS idx_move_slug ON move (normalized_name)",
-            ],
-            "pokemon_moves": [
-                "CREATE INDEX IF NOT EXISTS idx_pm_lookup ON pokemon_moves (pokemon_id, move_id, is_egg_move)",
-            ],
-            "pokemon_move_learn": [
-                "CREATE INDEX IF NOT EXISTS idx_pml_lookup ON pokemon_move_learn (pokemon_id, move_id, learn_method, generation)",
-            ],
-        }
+                index_plan = {
+                    "smogon_builds": [
+                        "CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_id ON smogon_builds (pokemon_id)",
+                        "CREATE INDEX IF NOT EXISTS idx_smogon_generation ON smogon_builds (generation)",
+                        "CREATE INDEX IF NOT EXISTS idx_smogon_format ON smogon_builds (format)",
+                        "CREATE INDEX IF NOT EXISTS idx_smogon_format_name ON smogon_builds (format_name)",
+                        "CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_slug ON smogon_builds (pokemon_slug)",
+                        "CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_gen_format ON smogon_builds (pokemon_id, generation, format)",
+                    ],
+                    "move": [
+                        "CREATE INDEX IF NOT EXISTS idx_move_slug ON move (normalized_name)",
+                    ],
+                    "pokemon_moves": [
+                        "CREATE INDEX IF NOT EXISTS idx_pm_lookup ON pokemon_moves (pokemon_id, move_id, is_egg_move)",
+                    ],
+                    "pokemon_move_learn": [
+                        "CREATE INDEX IF NOT EXISTS idx_pml_lookup ON pokemon_move_learn (pokemon_id, move_id, learn_method, generation)",
+                    ],
+                }
 
-        for table_name, statements in index_plan.items():
-            if table_name not in existing_tables:
-                continue
-            for sql in statements:
-                conn.execute(sql)
-        conn.commit()
-        conn.close()
+                for table_name, statements in index_plan.items():
+                    if table_name not in existing_tables:
+                        continue
+                    for sql in statements:
+                        conn.exec_driver_sql(sql)
+            else:
+                mysql_index_sql = [
+                    "CREATE INDEX idx_smogon_pokemon_id ON smogon_builds (pokemon_id)",
+                    "CREATE INDEX idx_smogon_generation ON smogon_builds (generation)",
+                    "CREATE INDEX idx_smogon_format ON smogon_builds (format)",
+                    "CREATE INDEX idx_smogon_format_name ON smogon_builds (format_name)",
+                    "CREATE INDEX idx_smogon_pokemon_slug ON smogon_builds (pokemon_slug)",
+                    "CREATE INDEX idx_smogon_pokemon_gen_format ON smogon_builds (pokemon_id, generation, format)",
+                    "CREATE INDEX idx_move_slug ON move (normalized_name)",
+                    "CREATE INDEX idx_pm_lookup ON pokemon_moves (pokemon_id, move_id, is_egg_move)",
+                    "CREATE INDEX idx_pml_lookup ON pokemon_move_learn (pokemon_id, move_id, learn_method, generation)",
+                ]
+                for sql in mysql_index_sql:
+                    try:
+                        conn.exec_driver_sql(sql)
+                    except Exception as exc:
+                        msg = str(exc).lower()
+                        if "duplicate key name" in msg or "already exists" in msg:
+                            continue
+                        raise
     except Exception as e:
         logging.getLogger("auto_update").warning(f"ensure_performance_indexes error: {e}")
 
@@ -525,6 +547,74 @@ def get_smogon_build_options(
     formats = sorted({(row.format_name or "unknown") for row in format_rows})
 
     return {"generations": generations, "formats": formats}
+
+
+@app.get("/api/admin/smogon-sync-status", tags=["Admin"])
+def get_smogon_sync_status(db: Session = Depends(get_db)):
+    """Admin status for Smogon ingest progress without requiring terminal access."""
+    try:
+        all_formats, _ = resolve_format_ids(args_formats=None, from_index=True, preset=None, default_generation=9)
+    except Exception:
+        all_formats = []
+
+    total_formats = len(all_formats)
+    total_records = db.query(SmogonBuild).count()
+
+    success_count = 0
+    failed_count = 0
+    pending_count = total_formats
+    last_updated = None
+    generation_rows = []
+
+    try:
+        success_count = db.query(CrawlHistory).filter(CrawlHistory.source == "smogon", CrawlHistory.status == "success").count()
+        failed_count = db.query(CrawlHistory).filter(CrawlHistory.source == "smogon", CrawlHistory.status == "failed").count()
+        pending_count = max(total_formats - success_count - failed_count, 0)
+
+        last_row = (
+            db.query(CrawlHistory)
+            .filter(CrawlHistory.source == "smogon")
+            .order_by(CrawlHistory.updated_at.desc())
+            .first()
+        )
+        last_updated = last_row.updated_at.isoformat() if last_row and last_row.updated_at else None
+
+        generation_rows = db.execute(
+            text(
+                """
+                SELECT generation, COUNT(1) AS cnt
+                FROM crawl_history
+                WHERE source = 'smogon' AND status = 'success'
+                GROUP BY generation
+                ORDER BY generation DESC
+                """
+            )
+        ).fetchall()
+    except Exception as exc:
+        # Older DBs may not have crawl_history yet; serve safe fallback instead of 500.
+        msg = str(exc).lower()
+        if "crawl_history" in msg and ("doesn't exist" in msg or "no such table" in msg):
+            try:
+                CrawlHistory.__table__.create(bind=engine, checkfirst=True)
+                db.commit()
+            except Exception:
+                db.rollback()
+            logging.getLogger("api").warning("crawl_history table missing; returned fallback sync status")
+        else:
+            logging.getLogger("api").warning(f"smogon sync status fallback due to query error: {exc}")
+
+    return {
+        "total_formats": total_formats,
+        "success_formats": success_count,
+        "failed_formats": failed_count,
+        "pending_formats": pending_count,
+        "smogon_build_records": total_records,
+        "last_updated_at": last_updated,
+        "by_generation": [
+            {"generation": row[0], "synced_formats": int(row[1])}
+            for row in generation_rows
+        ],
+    }
 
 
 # ════════════════════════════════════════════════════════════

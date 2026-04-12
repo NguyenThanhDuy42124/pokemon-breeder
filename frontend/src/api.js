@@ -117,3 +117,10 @@ export async function getServerStatus() {
   if (!res.ok) return null;
   return res.json();
 }
+
+// ─── Smogon Sync Status (admin) ──────────────────────────
+export async function getSmogonSyncStatus() {
+  const res = await fetch(`${BASE}/api/admin/smogon-sync-status`);
+  if (!res.ok) return null;
+  return res.json();
+}

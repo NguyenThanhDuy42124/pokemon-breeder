@@ -512,6 +512,82 @@ body {
   font-size: 1.25em;
 }
 
+.admin-sync-card {
+  margin-bottom: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-grad), var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.admin-sync-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-sync-head h3 {
+  font-size: 0.95rem;
+  color: var(--accent);
+  letter-spacing: 0.4px;
+}
+
+.admin-sync-meta {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.admin-progress-track {
+  width: 100%;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.admin-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width 0.35s ease;
+}
+
+.admin-sync-grid {
+  margin-top: 0.55rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.admin-sync-updated {
+  margin-top: 0.45rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.admin-sync-tags {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.admin-sync-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--info);
+  background: var(--info-bg);
+}
+
 /* ══════════════════════════════════════════════════════════
    Parents Row
    ══════════════════════════════════════════════════════════ */
@@ -2575,6 +2651,10 @@ body {
 
   .parent-panel {
     padding: 1rem;
+  }
+
+  .admin-sync-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .parent-label {

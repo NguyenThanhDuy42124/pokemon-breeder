@@ -9,6 +9,7 @@ Usage:
 """
 
 import argparse
+import datetime
 import json
 import os
 import re
@@ -20,7 +21,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 
 from database import SessionLocal, engine
-from models import Base, Pokemon, Move, SmogonBuild
+from models import Base, Pokemon, Move, SmogonBuild, CrawlHistory
 from slugify_utils import slugify
 
 try:
@@ -33,6 +34,8 @@ SMOGON_BASE = "https://pkmn.github.io/smogon/data/sets"
 INDEX_URL = f"{SMOGON_BASE}/index.json"
 STAT_KEYS = ["hp", "atk", "def", "spa", "spd", "spe"]
 GEN_PATTERN = re.compile(r"^gen([1-9])([a-z0-9-]*)$")
+BATCH_COMMIT_SIZE = 800
+LARGE_JSON_THRESHOLD_BYTES = 5 * 1024 * 1024
 
 PRESET_GEN9_CORE = [
     "gen9ou",
@@ -421,6 +424,45 @@ def ensure_schema_upgrade(db):
     db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_slug ON smogon_builds (pokemon_slug)"))
     db.execute(text("CREATE INDEX IF NOT EXISTS idx_move_slug ON move (normalized_name)"))
     db.execute(text("CREATE INDEX IF NOT EXISTS idx_pokemon_slug ON pokemon (name)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_gen_format ON smogon_builds (pokemon_id, generation, format)"))
+    db.commit()
+
+
+def upsert_crawl_history(
+    db,
+    format_id: str,
+    generation: str,
+    source_url: str,
+    status: str,
+    record_count: int = 0,
+    skipped_count: int = 0,
+    error_log: str | None = None,
+):
+    now = datetime.datetime.utcnow()
+    row = {
+        "source": "smogon",
+        "format": format_id,
+        "generation": generation,
+        "status": status,
+        "record_count": int(record_count),
+        "skipped_count": int(skipped_count),
+        "error_log": error_log,
+        "source_url": source_url,
+        "updated_at": now,
+        "last_synced_at": now if status == "success" else None,
+    }
+
+    dialect = db.bind.dialect.name
+    if dialect == "mysql":
+        stmt = mysql_insert(CrawlHistory).values(**row)
+        upsert = stmt.on_duplicate_key_update(**{k: row[k] for k in row if k != "format"})
+    else:
+        stmt = sqlite_insert(CrawlHistory).values(**row)
+        upsert = stmt.on_conflict_do_update(
+            index_elements=["format"],
+            set_={k: row[k] for k in row if k != "format"},
+        )
+    db.execute(upsert)
     db.commit()
 
 
@@ -514,9 +556,14 @@ def stream_seed_format(db, format_id: str, local_path: str, source_url: str, pok
     batch = 0
 
     with open(local_path, "rb") as f:
+        file_size = os.path.getsize(local_path)
         if ijson:
             pokemon_iter = ijson.kvitems(f, "")
         else:
+            if file_size >= LARGE_JSON_THRESHOLD_BYTES:
+                raise RuntimeError(
+                    "ijson is required for large Smogon files. Install ijson to continue streaming."
+                )
             payload = json.load(f)
             pokemon_iter = payload.items()
 
@@ -578,7 +625,7 @@ def stream_seed_format(db, format_id: str, local_path: str, source_url: str, pok
 
                 inserted += 1
                 batch += 1
-                if batch >= 250:
+                if batch >= BATCH_COMMIT_SIZE:
                     db.commit()
                     batch = 0
 
@@ -638,27 +685,71 @@ def main():
         for fmt in format_ids:
             url = f"{SMOGON_BASE}/{fmt}.json"
             local_path = os.path.join(data_dir, f"{fmt}.json")
+            generation, _ = parse_generation_and_format(fmt)
+
+            upsert_crawl_history(
+                db=db,
+                format_id=fmt,
+                generation=generation,
+                source_url=url,
+                status="pending",
+                record_count=0,
+                skipped_count=0,
+                error_log=None,
+            )
 
             print(f"Streaming download {url} ...")
             try:
                 stream_download(url, local_path)
             except requests.RequestException as exc:
                 print(f"[{fmt}] download failed: {exc}")
+                upsert_crawl_history(
+                    db=db,
+                    format_id=fmt,
+                    generation=generation,
+                    source_url=url,
+                    status="failed",
+                    error_log=str(exc),
+                )
                 continue
 
             if args.clean:
                 db.execute(delete(SmogonBuild).where(SmogonBuild.format == fmt))
                 db.commit()
 
-            inserted, skipped = stream_seed_format(
-                db=db,
-                format_id=fmt,
-                local_path=local_path,
-                source_url=url,
-                pokemon_lookup=pokemon_lookup,
-            )
+            try:
+                inserted, skipped = stream_seed_format(
+                    db=db,
+                    format_id=fmt,
+                    local_path=local_path,
+                    source_url=url,
+                    pokemon_lookup=pokemon_lookup,
+                )
+            except Exception as exc:
+                upsert_crawl_history(
+                    db=db,
+                    format_id=fmt,
+                    generation=generation,
+                    source_url=url,
+                    status="failed",
+                    error_log=str(exc),
+                )
+                print(f"[{fmt}] parse/seed failed: {exc}")
+                continue
+
             total_inserted += inserted
             total_skipped += skipped
+
+            upsert_crawl_history(
+                db=db,
+                format_id=fmt,
+                generation=generation,
+                source_url=url,
+                status="success",
+                record_count=inserted,
+                skipped_count=skipped,
+                error_log=None,
+            )
 
             print(f"[{fmt}] inserted/updated: {inserted}, skipped (pokemon map miss): {skipped}")
             print(f"Saved raw json: {local_path}")
