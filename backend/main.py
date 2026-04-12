@@ -24,6 +24,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
+from sqlalchemy.exc import OperationalError
 from contextlib import asynccontextmanager
 import os
 import logging
@@ -31,6 +32,7 @@ import json
 import threading
 import datetime
 import subprocess
+import time
 from database import SessionLocal
 from models import Pokemon, EggGroup, Nature, Ability, SmogonBuild, pokemon_ability
 from schemas import (
@@ -169,7 +171,8 @@ def ensure_db_columns():
     if not os.path.exists(db_path):
         return
     try:
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, timeout=30)
+        conn.execute("PRAGMA busy_timeout=30000")
         cursor = conn.execute("PRAGMA table_info(pokemon)")
         existing = {row[1] for row in cursor.fetchall()}
         new_cols = [
@@ -197,7 +200,8 @@ def ensure_performance_indexes():
     try:
         import sqlite3
 
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, timeout=30)
+        conn.execute("PRAGMA busy_timeout=30000")
         cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
         existing_tables = {row[0] for row in cursor.fetchall()}
 
@@ -229,6 +233,22 @@ def ensure_performance_indexes():
         conn.close()
     except Exception as e:
         logging.getLogger("auto_update").warning(f"ensure_performance_indexes error: {e}")
+
+
+def _execute_with_db_lock_retry(operation, label: str, retries: int = 2, delay_sec: float = 0.2):
+    """Retry short-lived SQLite lock conflicts to reduce transient 500 errors."""
+    for attempt in range(retries + 1):
+        try:
+            return operation()
+        except OperationalError as exc:
+            message = str(exc).lower()
+            if "database is locked" in message and attempt < retries:
+                logging.getLogger("auto_update").warning(
+                    f"{label}: sqlite locked, retry {attempt + 1}/{retries}"
+                )
+                time.sleep(delay_sec * (attempt + 1))
+                continue
+            raise
 
 
 # ── Create the FastAPI app ──────────────────────────────────
@@ -391,8 +411,16 @@ def browse_pokemon(
         start, end = REGION_RANGES[region.lower()]
         query = query.filter(Pokemon.id >= start, Pokemon.id <= end)
 
-    total = query.count()
-    results = query.order_by(Pokemon.id).offset(offset).limit(limit).all()
+    try:
+        total = _execute_with_db_lock_retry(lambda: query.count(), "browse-count")
+        results = _execute_with_db_lock_retry(
+            lambda: query.order_by(Pokemon.id).offset(offset).limit(limit).all(),
+            "browse-results",
+        )
+    except OperationalError as exc:
+        if "database is locked" in str(exc).lower():
+            raise HTTPException(status_code=503, detail="Database busy, please retry") from exc
+        raise
 
     return {
         "total": total,

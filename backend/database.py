@@ -22,7 +22,10 @@ DATABASE_URL = f"sqlite:///{DB_PATH}"
 engine = create_engine(
     DATABASE_URL,
     echo=False,
-    connect_args={"check_same_thread": False},  # needed for FastAPI + SQLite
+    connect_args={
+        "check_same_thread": False,
+        "timeout": 30,
+    },  # needed for FastAPI + SQLite
 )
 
 # Enable SQLite foreign key enforcement (off by default!)
@@ -30,6 +33,9 @@ engine = create_engine(
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.execute("PRAGMA busy_timeout=30000")
     cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
