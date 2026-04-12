@@ -37,7 +37,7 @@ export default function ResultsPanel({ results, loading, error }) {
     );
   }
 
-  const { parent_a, parent_b, held_item_a, held_item_b, inherited_count, results: rows, nature_info, ability_info, target_iv_result, offspring_name, offspring_id, offspring_sprite_url } = results;
+  const { parent_a, parent_b, held_item_a, held_item_b, inherited_count, results: rows, nature_info, ability_info, target_iv_result, offspring_name, offspring_id, offspring_sprite_url, planner_steps } = results;
 
   return (
     <div className="results-panel">
@@ -200,6 +200,31 @@ export default function ResultsPanel({ results, loading, error }) {
             <p>{t("noAbilitySelected")}</p>
           )}
           <p className="info-explanation">{ability_info.explanation}</p>
+        </div>
+      )}
+
+      {/* Planner roadmap */}
+      {Array.isArray(planner_steps) && planner_steps.length > 0 && (
+        <div className="info-card planner-card">
+          <h4>{t("plannerRoadmap")}</h4>
+          <div className="planner-list">
+            {planner_steps.map((step) => (
+              <div className="planner-step" key={`${step.step}-${step.title}`}>
+                <div className="planner-step-header">
+                  <span className="planner-step-index">{step.step}</span>
+                  <strong>{step.title}</strong>
+                </div>
+                <p className="planner-step-desc">{step.description}</p>
+                {Array.isArray(step.tags) && step.tags.length > 0 && (
+                  <div className="planner-tags">
+                    {step.tags.map((tag) => (
+                      <span key={`${step.step}-${tag}`} className="planner-tag">{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -342,6 +342,154 @@ body {
   color: white;
 }
 
+/* Planner roadmap */
+.planner-card {
+  margin-top: 1rem;
+}
+
+.planner-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.planner-step {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem;
+}
+
+.planner-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.planner-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #111;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.planner-step-desc {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.planner-tags {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.planner-tag {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--info-bg);
+  color: var(--info);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* Selected Smogon build preview */
+.build-preview-card {
+  margin-top: 0.7rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(165deg, var(--surface2), var(--surface));
+}
+
+.build-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.build-preview-format {
+  font-size: 0.74rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.build-preview-meta {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.build-preview-row {
+  margin-top: 0.45rem;
+}
+
+.build-preview-label {
+  display: inline-block;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.build-preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.build-chip {
+  display: inline-block;
+  padding: 0.16rem 0.46rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--info-bg);
+  color: var(--info);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.iv-chip {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.build-seed-hint {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 0.5rem 0.6rem;
+}
+
+.mini-label {
+  display: block;
+  margin-top: 0.55rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 /* ══════════════════════════════════════════════════════════
    Main Layout
    ══════════════════════════════════════════════════════════ */

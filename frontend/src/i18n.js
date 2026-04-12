@@ -114,6 +114,15 @@ const translations = {
     reasonBabyShort: "Baby",
     reasonLegendaryShort: "Legendary",
     reasonMythicalShort: "Mythical",
+    sampleBuild: "Sample Build",
+    selectSampleBuild: "-- select sample build --",
+    plannerRoadmap: "Breeding Roadmap",
+    movesLabel: "Moves",
+    sampleBuildEmptyHint: "No sample build data yet. Run backend seed script: python seed_smogon_builds.py --formats gen9ou",
+    generationLabel: "Generation",
+    formatLabel: "Format",
+    selectGeneration: "-- select generation --",
+    selectFormat: "-- select format --",
 
     // Browse / Advanced search
     browsePokemon: "Browse Pokémon",
@@ -232,6 +241,15 @@ const translations = {
     reasonBabyShort: "Baby",
     reasonLegendaryShort: "Huyền thoại",
     reasonMythicalShort: "Thần thoại",
+    sampleBuild: "Build mẫu",
+    selectSampleBuild: "-- chọn build mẫu --",
+    plannerRoadmap: "Lộ trình lai giống",
+    movesLabel: "Chiêu thức",
+    sampleBuildEmptyHint: "Chưa có dữ liệu build mẫu. Hãy seed backend: python seed_smogon_builds.py --formats gen9ou",
+    generationLabel: "Thế hệ",
+    formatLabel: "Format",
+    selectGeneration: "-- chọn thế hệ --",
+    selectFormat: "-- chọn format --",
 
     // Browse / Advanced search
     browsePokemon: "Duyệt Pokémon",
