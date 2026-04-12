@@ -12,25 +12,36 @@ HOW IT WORKS (for beginners):
 import os
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, declarative_base
+from db_url_utils import normalize_database_url
 
 # SQLite database file lives next to this script
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pokemon_breeding.db")
-DATABASE_URL = f"sqlite:///{DB_PATH}"
+DEFAULT_SQLITE_URL = f"sqlite:///{DB_PATH}"
+DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL")) or DEFAULT_SQLITE_URL
+
+is_sqlite = DATABASE_URL.startswith("sqlite://")
+
+connect_args = {}
+if is_sqlite:
+    connect_args = {
+        "check_same_thread": False,
+        "timeout": 30,
+    }
 
 # echo=True → prints every SQL statement to the terminal (great for learning!)
 # Set to False if the output gets too noisy.
 engine = create_engine(
     DATABASE_URL,
     echo=False,
-    connect_args={
-        "check_same_thread": False,
-        "timeout": 30,
-    },  # needed for FastAPI + SQLite
+    connect_args=connect_args,
+    pool_pre_ping=True,
 )
 
 # Enable SQLite foreign key enforcement (off by default!)
 @event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
+    if not is_sqlite:
+        return
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.execute("PRAGMA journal_mode=WAL")

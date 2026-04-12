@@ -17,6 +17,7 @@ from typing import Any
 import requests
 from sqlalchemy import delete, text
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 
 from database import SessionLocal, engine
 from models import Base, Pokemon, Move, SmogonBuild
@@ -391,6 +392,12 @@ def _resolve_index_stage_preset(preset: str, index_formats: list[str]) -> list[s
 
 
 def ensure_schema_upgrade(db):
+    dialect = db.bind.dialect.name
+
+    if dialect != "sqlite":
+        # On MySQL, Base.metadata.create_all and model constraints are authoritative.
+        return
+
     # Add missing columns for old DB files and create critical indexes.
     columns = {row[1] for row in db.execute(text("PRAGMA table_info(smogon_builds)")).fetchall()}
     alter_specs = [
@@ -499,6 +506,7 @@ def stream_download(url: str, target_file: str):
 
 def stream_seed_format(db, format_id: str, local_path: str, source_url: str, pokemon_lookup: dict[str, Pokemon]) -> tuple[int, int]:
     generation, format_name = parse_generation_and_format(format_id)
+    dialect = db.bind.dialect.name
 
     inserted = 0
     skipped = 0
@@ -554,11 +562,17 @@ def stream_seed_format(db, format_id: str, local_path: str, source_url: str, pok
                     "requires_hidden_ability": requires_hidden_ability,
                 }
 
-                stmt = sqlite_insert(SmogonBuild).values(**row)
-                upsert = stmt.on_conflict_do_update(
-                    index_elements=["pokemon_id", "format", "build_name"],
-                    set_={k: row[k] for k in row if k not in {"pokemon_id", "format", "build_name"}},
-                )
+                if dialect == "mysql":
+                    stmt = mysql_insert(SmogonBuild).values(**row)
+                    upsert = stmt.on_duplicate_key_update(
+                        **{k: row[k] for k in row if k not in {"pokemon_id", "format", "build_name"}}
+                    )
+                else:
+                    stmt = sqlite_insert(SmogonBuild).values(**row)
+                    upsert = stmt.on_conflict_do_update(
+                        index_elements=["pokemon_id", "format", "build_name"],
+                        set_={k: row[k] for k in row if k not in {"pokemon_id", "format", "build_name"}},
+                    )
                 db.execute(upsert)
 
                 inserted += 1
