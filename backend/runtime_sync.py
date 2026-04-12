@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import time
@@ -20,6 +21,7 @@ from pathlib import Path
 
 
 STATE_FILE = Path(__file__).resolve().parent / "data" / "runtime_sync_state.json"
+DB_FILE = Path(__file__).resolve().parent / "pokemon_breeding.db"
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -87,6 +89,29 @@ def _run_script(script_name: str, args: list[str], backend_dir: Path, timeout_se
         return False, str(exc)
 
 
+def _is_table_empty(table_name: str) -> bool:
+    """Return True when table is missing or has zero rows."""
+    if not DB_FILE.exists():
+        return True
+    try:
+        conn = sqlite3.connect(str(DB_FILE), timeout=10)
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            (table_name,),
+        )
+        table_exists = cursor.fetchone() is not None
+        if not table_exists:
+            conn.close()
+            return True
+
+        count_cursor = conn.execute(f"SELECT COUNT(1) FROM {table_name}")
+        count = int(count_cursor.fetchone()[0])
+        conn.close()
+        return count == 0
+    except Exception:
+        return True
+
+
 def run_runtime_sync(reason: str = "startup", force: bool = False) -> dict:
     """
     Execute runtime synchronization tasks after startup/pull.
@@ -110,7 +135,13 @@ def run_runtime_sync(reason: str = "startup", force: bool = False) -> dict:
     head = _get_git_head(project_root)
     state = _load_state()
 
-    if not force and state.get("last_success_head") == head:
+    smogon_enabled = _env_bool("AUTO_SMOGON_SYNC", True)
+    move_enabled = _env_bool("AUTO_MOVE_SYNC", True)
+
+    needs_smogon_seed = smogon_enabled and _is_table_empty("smogon_builds")
+    needs_move_seed = move_enabled and _is_table_empty("pokemon_move_learn")
+
+    if not force and state.get("last_success_head") == head and not (needs_smogon_seed or needs_move_seed):
         return {"status": "skipped", "reason": "head-unchanged", "head": head}
 
     timeout_sec = int(os.getenv("AUTO_RUNTIME_SYNC_TIMEOUT_SEC", "1800"))
@@ -123,7 +154,7 @@ def run_runtime_sync(reason: str = "startup", force: bool = False) -> dict:
         "timestamp": int(time.time()),
     }
 
-    if _env_bool("AUTO_SMOGON_SYNC", True):
+    if smogon_enabled:
         if _env_bool("AUTO_SMOGON_FROM_INDEX", False):
             smogon_args = ["--from-index"]
         else:
@@ -135,7 +166,7 @@ def run_runtime_sync(reason: str = "startup", force: bool = False) -> dict:
         if not ok:
             result["status"] = "error"
 
-    if _env_bool("AUTO_MOVE_SYNC", True):
+    if move_enabled:
         if _env_bool("AUTO_MOVE_SYNC_ALL", True):
             move_args = ["--all"]
         else:

@@ -7,12 +7,30 @@ No Node.js needed – frontend/build/ is pre-built and included in the repo.
 import subprocess
 import sys
 import os
+import shutil
 
 # ── Force sync with GitHub (fixes Pterodactyl git pull conflicts) ──
 project_root = os.path.dirname(os.path.abspath(__file__))
+backend_db_rel = os.path.join("backend", "pokemon_breeding.db")
+backend_db_path = os.path.join(project_root, backend_db_rel)
+backend_db_backup_path = backend_db_path + ".startup-backup"
+
+
+def _backup_runtime_db():
+    if os.path.exists(backend_db_path):
+        shutil.copy2(backend_db_path, backend_db_backup_path)
+
+
+def _restore_runtime_db_if_needed():
+    if os.path.exists(backend_db_backup_path):
+        shutil.move(backend_db_backup_path, backend_db_path)
+
+
 if os.path.isdir(os.path.join(project_root, ".git")):
     print("==> Syncing code from GitHub...")
     try:
+        _backup_runtime_db()
+
         fetch = subprocess.run(
             ["git", "fetch", "origin"],
             cwd=project_root,
@@ -47,6 +65,9 @@ if os.path.isdir(os.path.join(project_root, ".git")):
                     f"main_err={stderr_main} | master_err={stderr_master}"
                 )
 
+        # Keep seeded runtime DB after git reset, because the DB file is tracked in repo.
+        _restore_runtime_db_if_needed()
+
         head = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
             cwd=project_root,
@@ -57,6 +78,7 @@ if os.path.isdir(os.path.join(project_root, ".git")):
         current_head = (head.stdout or "unknown").strip()
         print(f"==> Code synced successfully! HEAD={current_head}")
     except Exception as e:
+        _restore_runtime_db_if_needed()
         print(f"==> Git sync failed. Running existing code. Reason: {e}")
 
 # Get port from environment variable (Pterodactyl sets SERVER_PORT or PORT)
