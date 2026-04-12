@@ -226,6 +226,7 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
   const selectedBuild = builds.find((b) => String(b.id) === String(selectedBuildId));
   const generationOptions = (buildOptions?.generations || []).filter(Boolean);
   const formatOptions = (buildOptions?.formats || []).filter(Boolean);
+  const hasSmogonMeta = generationOptions.length > 0;
   const filteredBuilds = (builds || []).filter((b) => {
     if (selectedGeneration && b.generation !== selectedGeneration) return false;
     if (selectedFormatName && b.format_name !== selectedFormatName) return false;
@@ -316,7 +317,7 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
       {details && (
         <div className="field">
           <label>{t("sampleBuild")}</label>
-          {builds.length > 0 ? (
+          {hasSmogonMeta ? (
             <>
               <label className="mini-label">{t("generationLabel")}</label>
               <select
@@ -361,6 +362,10 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
                   </option>
                 ))}
               </select>
+
+              {selectedGeneration && selectedFormatName && filteredBuilds.length === 0 && (
+                <div className="build-seed-hint">{t("sampleBuildNoMatchHint")}</div>
+              )}
 
               {selectedBuild && (
                 <div className="build-preview-card">
