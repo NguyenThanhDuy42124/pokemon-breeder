@@ -185,7 +185,7 @@ class SmogonBuild(Base):
     """
     __tablename__ = "smogon_builds"
     __table_args__ = (
-        UniqueConstraint("pokemon_id", "format", "build_name", name="uq_smogon_build_unique"),
+        UniqueConstraint("pokemon_id", "format", "generation", "build_name", name="uq_smogon_build_unique"),
         Index("idx_smogon_pokemon_gen_format", "pokemon_id", "generation", "format"),
     )
 

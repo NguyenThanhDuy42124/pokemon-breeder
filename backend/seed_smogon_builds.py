@@ -13,10 +13,12 @@ import datetime
 import json
 import os
 import re
+import time
 from typing import Any
 
 import requests
 from sqlalchemy import delete, text
+from sqlalchemy import tuple_
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 
@@ -34,8 +36,7 @@ SMOGON_BASE = "https://pkmn.github.io/smogon/data/sets"
 INDEX_URL = f"{SMOGON_BASE}/index.json"
 STAT_KEYS = ["hp", "atk", "def", "spa", "spd", "spe"]
 GEN_PATTERN = re.compile(r"^gen([1-9])([a-z0-9-]*)$")
-BATCH_COMMIT_SIZE = 800
-LARGE_JSON_THRESHOLD_BYTES = 5 * 1024 * 1024
+BATCH_COMMIT_SIZE = 1000
 
 PRESET_GEN9_CORE = [
     "gen9ou",
@@ -398,8 +399,27 @@ def _resolve_index_stage_preset(preset: str, index_formats: list[str]) -> list[s
 def ensure_schema_upgrade(db):
     dialect = db.bind.dialect.name
 
+    if dialect == "mysql":
+        # Ensure high-cardinality lookup indexes for large MySQL datasets.
+        db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_id ON smogon_builds (pokemon_id)"))
+        db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_generation ON smogon_builds (generation)"))
+        db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_format ON smogon_builds (format)"))
+        db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_gen_format ON smogon_builds (pokemon_id, generation, format)"))
+
+        # Keep a generation-aware unique key used by ON DUPLICATE KEY UPDATE.
+        # Old deployments may still have uq_smogon_build_unique; this new key is additive and safe.
+        db.execute(
+            text(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_smogon_build_unique_v2
+                ON smogon_builds (pokemon_id, format, generation, build_name)
+                """
+            )
+        )
+        db.commit()
+        return
+
     if dialect != "sqlite":
-        # On MySQL, Base.metadata.create_all and model constraints are authoritative.
         return
 
     # Add missing columns for old DB files and create critical indexes.
@@ -415,7 +435,7 @@ def ensure_schema_upgrade(db):
         if col not in columns:
             db.execute(text(f"ALTER TABLE smogon_builds ADD COLUMN {col} {col_type}"))
 
-    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_smogon_build_unique ON smogon_builds (pokemon_id, format, build_name)"))
+    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_smogon_build_unique ON smogon_builds (pokemon_id, format, generation, build_name)"))
     db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_id ON smogon_builds (pokemon_id)"))
     db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_generation ON smogon_builds (generation)"))
     db.execute(text("CREATE INDEX IF NOT EXISTS idx_smogon_format ON smogon_builds (format)"))
@@ -466,15 +486,20 @@ def upsert_crawl_history(
     db.commit()
 
 
-def ensure_move_id(db, move_name: str) -> int:
+def build_move_lookup(db) -> dict[str, int]:
+    return {m.normalized_name: m.id for m in db.query(Move).all()}
+
+
+def ensure_move_id(db, move_name: str, move_id_cache: dict[str, int]) -> int:
     normalized = slugify(move_name)
-    existing = db.query(Move).filter(Move.normalized_name == normalized).first()
-    if existing:
-        return existing.id
+    cached = move_id_cache.get(normalized)
+    if cached:
+        return cached
 
     move = Move(name=move_name, normalized_name=normalized)
     db.add(move)
     db.flush()
+    move_id_cache[normalized] = move.id
     return move.id
 
 
@@ -538,34 +563,105 @@ def resolve_format_ids(
     return index_formats, unknown
 
 
-def stream_download(url: str, target_file: str):
-    with requests.get(url, stream=True, timeout=90) as resp:
-        resp.raise_for_status()
-        with open(target_file, "wb") as f:
-            for chunk in resp.iter_content(chunk_size=1024 * 64):
-                if chunk:
-                    f.write(chunk)
+def stream_download(url: str, target_file: str, retries: int = 3):
+    last_exc = None
+    for attempt in range(1, retries + 1):
+        try:
+            with requests.get(url, stream=True, timeout=90) as resp:
+                resp.raise_for_status()
+                with open(target_file, "wb") as f:
+                    for chunk in resp.iter_content(chunk_size=1024 * 64):
+                        if chunk:
+                            f.write(chunk)
+            return
+        except requests.RequestException as exc:
+            last_exc = exc
+            if attempt >= retries:
+                break
+            time.sleep(min(2 * attempt, 6))
+    raise last_exc
 
 
-def stream_seed_format(db, format_id: str, local_path: str, source_url: str, pokemon_lookup: dict[str, Pokemon]) -> tuple[int, int]:
+def stream_seed_format(
+    db,
+    format_id: str,
+    local_path: str,
+    source_url: str,
+    pokemon_lookup: dict[str, Pokemon],
+    move_id_cache: dict[str, int],
+) -> tuple[int, int]:
     generation, format_name = parse_generation_and_format(format_id)
     dialect = db.bind.dialect.name
 
     inserted = 0
+    updated = 0
     skipped = 0
-    batch = 0
+
+    if ijson is None:
+        raise RuntimeError("ijson is required for stream parsing. Install ijson before full ingest.")
+
+    def _flush_rows(rows: list[dict[str, Any]]):
+        nonlocal inserted, updated
+        if not rows:
+            return
+
+        keys = [(r["pokemon_id"], r["format"], r["generation"], r["build_name"]) for r in rows]
+        existing_rows = (
+            db.query(
+                SmogonBuild.pokemon_id,
+                SmogonBuild.format,
+                SmogonBuild.generation,
+                SmogonBuild.build_name,
+            )
+            .filter(tuple_(SmogonBuild.pokemon_id, SmogonBuild.format, SmogonBuild.generation, SmogonBuild.build_name).in_(keys))
+            .all()
+        )
+        existing_keys = {(r[0], r[1], r[2], r[3]) for r in existing_rows}
+
+        inserted += sum(1 for k in keys if k not in existing_keys)
+        updated += sum(1 for k in keys if k in existing_keys)
+
+        if dialect == "mysql":
+            stmt = mysql_insert(SmogonBuild).values(rows)
+            upsert = stmt.on_duplicate_key_update(
+                pokemon_slug=stmt.inserted.pokemon_slug,
+                format_name=stmt.inserted.format_name,
+                format_slug=stmt.inserted.format_slug,
+                source_url=stmt.inserted.source_url,
+                nature=stmt.inserted.nature,
+                ability=stmt.inserted.ability,
+                item=stmt.inserted.item,
+                moves_json=stmt.inserted.moves_json,
+                move_slugs_json=stmt.inserted.move_slugs_json,
+                move_ids_json=stmt.inserted.move_ids_json,
+                target_ivs_json=stmt.inserted.target_ivs_json,
+                requires_hidden_ability=stmt.inserted.requires_hidden_ability,
+            )
+        else:
+            stmt = sqlite_insert(SmogonBuild).values(rows)
+            upsert = stmt.on_conflict_do_update(
+                index_elements=["pokemon_id", "format", "generation", "build_name"],
+                set_={
+                    "pokemon_slug": stmt.excluded.pokemon_slug,
+                    "format_name": stmt.excluded.format_name,
+                    "format_slug": stmt.excluded.format_slug,
+                    "source_url": stmt.excluded.source_url,
+                    "nature": stmt.excluded.nature,
+                    "ability": stmt.excluded.ability,
+                    "item": stmt.excluded.item,
+                    "moves_json": stmt.excluded.moves_json,
+                    "move_slugs_json": stmt.excluded.move_slugs_json,
+                    "move_ids_json": stmt.excluded.move_ids_json,
+                    "target_ivs_json": stmt.excluded.target_ivs_json,
+                    "requires_hidden_ability": stmt.excluded.requires_hidden_ability,
+                },
+            )
+        db.execute(upsert)
+        db.commit()
 
     with open(local_path, "rb") as f:
-        file_size = os.path.getsize(local_path)
-        if ijson:
-            pokemon_iter = ijson.kvitems(f, "")
-        else:
-            if file_size >= LARGE_JSON_THRESHOLD_BYTES:
-                raise RuntimeError(
-                    "ijson is required for large Smogon files. Install ijson to continue streaming."
-                )
-            payload = json.load(f)
-            pokemon_iter = payload.items()
+        pokemon_iter = ijson.kvitems(f, "")
+        pending_rows: list[dict[str, Any]] = []
 
         for smogon_pokemon_name, builds_obj in pokemon_iter:
             pokemon = pokemon_lookup.get(slugify(str(smogon_pokemon_name)))
@@ -586,7 +682,7 @@ def stream_seed_format(db, format_id: str, local_path: str, source_url: str, pok
                 move_ids = []
                 move_slugs = []
                 for mv in moves:
-                    move_ids.append(ensure_move_id(db, mv))
+                    move_ids.append(ensure_move_id(db, mv, move_id_cache))
                     move_slugs.append(slugify(mv))
 
                 requires_hidden_ability = infer_hidden_ability(db, pokemon.id, str(ability) if ability else None)
@@ -610,27 +706,14 @@ def stream_seed_format(db, format_id: str, local_path: str, source_url: str, pok
                     "requires_hidden_ability": requires_hidden_ability,
                 }
 
-                if dialect == "mysql":
-                    stmt = mysql_insert(SmogonBuild).values(**row)
-                    upsert = stmt.on_duplicate_key_update(
-                        **{k: row[k] for k in row if k not in {"pokemon_id", "format", "build_name"}}
-                    )
-                else:
-                    stmt = sqlite_insert(SmogonBuild).values(**row)
-                    upsert = stmt.on_conflict_do_update(
-                        index_elements=["pokemon_id", "format", "build_name"],
-                        set_={k: row[k] for k in row if k not in {"pokemon_id", "format", "build_name"}},
-                    )
-                db.execute(upsert)
+                pending_rows.append(row)
+                if len(pending_rows) >= BATCH_COMMIT_SIZE:
+                    _flush_rows(pending_rows)
+                    pending_rows = []
 
-                inserted += 1
-                batch += 1
-                if batch >= BATCH_COMMIT_SIZE:
-                    db.commit()
-                    batch = 0
+        _flush_rows(pending_rows)
 
-    db.commit()
-    return inserted, skipped
+    return inserted, updated, skipped
 
 
 def main():
@@ -669,6 +752,10 @@ def main():
     if unknown_tokens:
         print(f"Ignored unknown format tokens: {', '.join(unknown_tokens)}")
 
+    if ijson is None:
+        print("ERROR: ijson is required for full ingest stream mode. Install it first: pip install ijson")
+        return
+
     Base.metadata.create_all(bind=engine)
 
     data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "smogon", "sets")
@@ -678,9 +765,12 @@ def main():
     try:
         ensure_schema_upgrade(db)
         pokemon_lookup = build_pokemon_lookup(db)
+        move_id_cache = build_move_lookup(db)
 
         total_inserted = 0
+        total_updated = 0
         total_skipped = 0
+        failed_formats: list[str] = []
 
         for fmt in format_ids:
             url = f"{SMOGON_BASE}/{fmt}.json"
@@ -703,6 +793,7 @@ def main():
                 stream_download(url, local_path)
             except requests.RequestException as exc:
                 print(f"[{fmt}] download failed: {exc}")
+                failed_formats.append(fmt)
                 upsert_crawl_history(
                     db=db,
                     format_id=fmt,
@@ -718,14 +809,16 @@ def main():
                 db.commit()
 
             try:
-                inserted, skipped = stream_seed_format(
+                inserted, updated, skipped = stream_seed_format(
                     db=db,
                     format_id=fmt,
                     local_path=local_path,
                     source_url=url,
                     pokemon_lookup=pokemon_lookup,
+                    move_id_cache=move_id_cache,
                 )
             except Exception as exc:
+                failed_formats.append(fmt)
                 upsert_crawl_history(
                     db=db,
                     format_id=fmt,
@@ -734,10 +827,11 @@ def main():
                     status="failed",
                     error_log=str(exc),
                 )
-                print(f"[{fmt}] parse/seed failed: {exc}")
+                print(f"[{fmt}] parse/seed failed for file {local_path}: {exc}")
                 continue
 
             total_inserted += inserted
+            total_updated += updated
             total_skipped += skipped
 
             upsert_crawl_history(
@@ -746,17 +840,23 @@ def main():
                 generation=generation,
                 source_url=url,
                 status="success",
-                record_count=inserted,
+                record_count=inserted + updated,
                 skipped_count=skipped,
                 error_log=None,
             )
 
-            print(f"[{fmt}] inserted/updated: {inserted}, skipped (pokemon map miss): {skipped}")
+            print(f"[{fmt}] inserted: {inserted}, updated: {updated}, skipped (pokemon map miss): {skipped}")
             print(f"Saved raw json: {local_path}")
 
+        total_rows = db.query(SmogonBuild).count()
         print("Done.")
-        print(f"Total inserted/updated builds: {total_inserted}")
+        print(f"Total new builds added: {total_inserted}")
+        print(f"Total existing builds updated: {total_updated}")
+        print(f"Total rows in smogon_builds: {total_rows}")
         print(f"Total skipped pokemon entries: {total_skipped}")
+        print(f"Failed format files: {len(failed_formats)}")
+        if failed_formats:
+            print("Failed list: " + ", ".join(failed_formats))
 
     finally:
         db.close()
