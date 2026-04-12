@@ -120,6 +120,8 @@ def run_runtime_sync(reason: str = "startup", force: bool = False) -> dict:
     - AUTO_RUNTIME_SYNC=1/0
     - AUTO_SMOGON_SYNC=1/0
     - AUTO_SMOGON_FROM_INDEX=1/0
+    - AUTO_SMOGON_PRESET=stage1|stage2|stage3|core|expanded|genX-core|genX-expanded
+    - AUTO_SMOGON_GENERATION=1..9
     - AUTO_SMOGON_FORMATS=gen9ou,gen9monotype
     - AUTO_MOVE_SYNC=1/0
     - AUTO_MOVE_SYNC_ALL=1/0
@@ -158,8 +160,13 @@ def run_runtime_sync(reason: str = "startup", force: bool = False) -> dict:
         if _env_bool("AUTO_SMOGON_FROM_INDEX", False):
             smogon_args = ["--from-index"]
         else:
-            formats = os.getenv("AUTO_SMOGON_FORMATS", "gen9ou,gen9monotype").strip()
-            smogon_args = ["--formats", formats]
+            generation = os.getenv("AUTO_SMOGON_GENERATION", "9").strip()
+            preset = os.getenv("AUTO_SMOGON_PRESET", "stage1").strip()
+            if preset:
+                smogon_args = ["--preset", preset, "--generation", generation]
+            else:
+                formats = os.getenv("AUTO_SMOGON_FORMATS", "ou,uu,ru,nu,ubers,lc,monotype,1v1,doubles,randombattle").strip()
+                smogon_args = ["--formats", formats, "--generation", generation]
 
         ok, detail = _run_script("seed_smogon_builds.py", smogon_args, backend_dir, timeout_sec)
         result["steps"].append({"name": "smogon", "ok": ok, "detail": detail})

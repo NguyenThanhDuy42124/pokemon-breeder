@@ -90,11 +90,49 @@ Cau hinh bang bien moi truong:
 - `AUTO_RUNTIME_SYNC=1` bat/tat orchestration tong
 - `AUTO_SMOGON_SYNC=1` bat/tat Smogon seed
 - `AUTO_SMOGON_FROM_INDEX=0` neu =1 se quet tat ca format trong index
-- `AUTO_SMOGON_FORMATS=gen9ou,gen9monotype` danh sach format seed khi khong dung from-index
+- `AUTO_SMOGON_PRESET=core|expanded|genX-core|genX-expanded` preset format theo gen
+- `AUTO_SMOGON_GENERATION=1..9` gen mac dinh khi format duoc nhap dang alias (`ou,uu,bh,vgc`...)
+- `AUTO_SMOGON_FORMATS=ou,uu,ru,nu,ubers,lc,...` danh sach format seed khi khong dung from-index/preset
 - `AUTO_MOVE_SYNC=1` bat/tat move-learning seed
 - `AUTO_MOVE_SYNC_ALL=1` neu =1 se quet toan bo Pokemon cho move-learning
 - `AUTO_MOVE_SYNC_LIMIT=1025` limit khi `AUTO_MOVE_SYNC_ALL=0`
 - `AUTO_RUNTIME_SYNC_TIMEOUT_SEC=1800` timeout cho moi script seed
+
+Preset Smogon hien co:
+
+- `core`: nhom format pho bien cho gen duoc chon boi `--generation`
+- `expanded`: bo mo rong cho gen duoc chon boi `--generation`
+- `genX-core`, `genX-expanded`: preset co dinh cho mot gen cu the (vd: `gen6-core`)
+- `stage1` (index-driven): `ou` + tat ca `vgc*` cua Gen1..Gen9
+- `stage2` (index-driven): `stage1` + `uu/ru/nu` cho Gen8-Gen9
+- `stage3` (index-driven): `stage2` + toan bo `gen9nationaldex*`
+
+Mac dinh runtime hien tai:
+
+- Neu khong set gi them, server se tu dong dung `AUTO_SMOGON_PRESET=stage1` de seed theo index (an toan hon cho host yeu).
+
+Quy uoc format Smogon:
+
+- Mau ten chuan: `gen[the_he][ten_format][phien_ban neu co]`
+- Vi du: `gen9ou`, `gen8vgc2022`, `gen7randombattle`, `gen6vgc2016`
+- De lay day du danh sach song Gen1-Gen9: `--from-index` (doc tu `index.json`)
+
+Vi du seed nhanh:
+
+- `python backend/seed_smogon_builds.py --generation 9 --preset core`
+- `python backend/seed_smogon_builds.py --preset gen8-core`
+- `python backend/seed_smogon_builds.py --preset gen7-expanded`
+- `python backend/seed_smogon_builds.py --formats "ou,uu,ru,nu,1v1,doubles,ag,bh,vgc"`
+- `python backend/seed_smogon_builds.py --preset stage1`
+- `python backend/seed_smogon_builds.py --preset stage2`
+- `python backend/seed_smogon_builds.py --preset stage3`
+- `python backend/seed_smogon_builds.py --from-index`  # nap full theo danh sach song index.json
+
+Chien luoc host 1GB RAM:
+
+- Giai doan 1: `--from-index` KHONG dung; seed `ou` + `vgc` cho cac gen can tra cuu
+- Giai doan 2: bo sung `uu,ru,nu` cho Gen 8-9
+- Giai doan 3: bo sung National Dex / OM lon neu can
 
 Luu y cho host yeu (1 vCPU, 1GB RAM):
 

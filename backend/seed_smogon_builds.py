@@ -33,6 +33,191 @@ INDEX_URL = f"{SMOGON_BASE}/index.json"
 STAT_KEYS = ["hp", "atk", "def", "spa", "spd", "spe"]
 GEN_PATTERN = re.compile(r"^gen([1-9])([a-z0-9-]+)$")
 
+PRESET_GEN9_CORE = [
+    "gen9ou",
+    "gen9uu",
+    "gen9ru",
+    "gen9nu",
+    "gen9ubers",
+    "gen9lc",
+    "gen9monotype",
+    "gen91v1",
+    "gen9doublesou",
+    "gen9randombattle",
+]
+
+PRESET_EXPANDED_SUFFIXES = [
+    "1v1",
+    "doublesou",
+    "doublesubers",
+    "doublesuu",
+    "ou",
+    "uu",
+    "ru",
+    "nu",
+    "pu",
+    "ubers",
+    "lc",
+    "nfe",
+    "zu",
+    "uubl",
+    "rubl",
+    "nubl",
+    "publ",
+    "zubl",
+    "nationaldex",
+    "nationaldexou",
+    "nationaldexuu",
+    "nationaldexru",
+    "nationaldexubers",
+    "nationaldexmonotype",
+    "nationaldexdoubles",
+    "nationaldexrotational",
+    "randombattle",
+    "randomdoublesbattle",
+    "almostanyability",
+    "balancedhackmons",
+    "stabmons",
+    "camomons",
+    "mixandmega",
+    "godlygift",
+    "sharedpower",
+    "partnersincrime",
+    "inheritance",
+    "metronomebattle",
+    "cap",
+    "monotype",
+    "draft",
+    "leaderschoice",
+    "ssb",
+    "challengecup1v1",
+    "battlefactory",
+    "vgc2024",
+    "vgc2023series1",
+    "vgc2023series2",
+    "vgc2023series3",
+    "vgc2023series4",
+    "vgc2024regulatione",
+    "vgc2024regulationf",
+    "vgc2024regulationg",
+    "vgc2025regulationi",
+    "battlestadiumsingles",
+    "bssseries1",
+    "bssseries2",
+    "anythinggoes",
+    "ubersuu",
+    "omms",
+    "omotm",
+]
+
+PRESET_CORE_SUFFIXES = [
+    "ou",
+    "uu",
+    "ru",
+    "nu",
+    "ubers",
+    "lc",
+    "monotype",
+    "1v1",
+    "doublesou",
+    "randombattle",
+]
+
+PRESET_GEN9_EXPANDED = [f"gen9{suffix}" for suffix in PRESET_EXPANDED_SUFFIXES]
+
+FORMAT_PRESETS = {
+    "core": [f"gen9{suffix}" for suffix in PRESET_CORE_SUFFIXES],
+    "expanded": PRESET_GEN9_EXPANDED,
+    "gen9-core": PRESET_GEN9_CORE,
+    "gen9-expanded": PRESET_GEN9_EXPANDED,
+}
+
+INDEX_DRIVEN_STAGE_PRESETS = {
+    "stage1",
+    "stage-1",
+    "backbone",
+    "backbone-all-gens",
+    "stage2",
+    "stage-2",
+    "stage3",
+    "stage-3",
+}
+
+FORMAT_ALIASES = {
+    "1v1": "1v1",
+    "2v2doubles": "doublesou",
+    "doubles": "doublesou",
+    "doublesou": "doublesou",
+    "doublesubers": "doublesubers",
+    "doublesuu": "doublesuu",
+    "ou": "ou",
+    "uu": "uu",
+    "ru": "ru",
+    "nu": "nu",
+    "pu": "pu",
+    "uber": "ubers",
+    "ubers": "ubers",
+    "lc": "lc",
+    "nfe": "nfe",
+    "zu": "zu",
+    "uubl": "uubl",
+    "rubl": "rubl",
+    "nubl": "nubl",
+    "publ": "publ",
+    "zubl": "zubl",
+    "nationaldex": "nationaldex",
+    "nationaldexou": "nationaldexou",
+    "nationaldexuu": "nationaldexuu",
+    "nationaldexru": "nationaldexru",
+    "nationaldexubers": "nationaldexubers",
+    "nationaldexmonotype": "nationaldexmonotype",
+    "nationaldexdoubles": "nationaldexdoubles",
+    "nationaldexrotational": "nationaldexrotational",
+    "randombattle": "randombattle",
+    "randomdoubles": "randomdoublesbattle",
+    "randomdoublesbattle": "randomdoublesbattle",
+    "almostanyability": "almostanyability",
+    "aaa": "almostanyability",
+    "balancedhackmons": "balancedhackmons",
+    "bh": "balancedhackmons",
+    "stabmons": "stabmons",
+    "camomons": "camomons",
+    "mixandmega": "mixandmega",
+    "godlygift": "godlygift",
+    "sharedpower": "sharedpower",
+    "partnersincrime": "partnersincrime",
+    "inheritance": "inheritance",
+    "inh": "inheritance",
+    "metronomebattle": "metronomebattle",
+    "cap": "cap",
+    "monotype": "monotype",
+    "draft": "draft",
+    "leaderschoice": "leaderschoice",
+    "ssb": "ssb",
+    "cc1v1": "challengecup1v1",
+    "challengecup1v1": "challengecup1v1",
+    "battlefactory": "battlefactory",
+    "vgc": "vgc2024",
+    "vgc2024": "vgc2024",
+    "vgc23series1": "vgc2023series1",
+    "vgc23series2": "vgc2023series2",
+    "vgc23series3": "vgc2023series3",
+    "vgc23series4": "vgc2023series4",
+    "vgc24regulatione": "vgc2024regulatione",
+    "vgc24regulationf": "vgc2024regulationf",
+    "vgc24regulationg": "vgc2024regulationg",
+    "vgc25regulationi": "vgc2025regulationi",
+    "battlestadiumsingles": "battlestadiumsingles",
+    "bssseries1": "bssseries1",
+    "bssseries2": "bssseries2",
+    "ag": "anythinggoes",
+    "anythinggoes": "anythinggoes",
+    "ubersuu": "ubersuu",
+    "ommspotlight": "omms",
+    "omms": "omms",
+    "omotm": "omotm",
+}
+
 
 def pick_first(value: Any):
     if isinstance(value, list):
@@ -76,6 +261,133 @@ def parse_generation_and_format(format_id: str) -> tuple[str, str]:
     if not m:
         return "unknown", format_id or "unknown"
     return f"gen{m.group(1)}", m.group(2)
+
+
+def _normalize_token(raw: str) -> str:
+    value = (raw or "").strip().lower()
+    value = value.replace("&", "and")
+    value = value.replace("'", "")
+    return re.sub(r"[^a-z0-9]", "", value)
+
+
+def _resolve_format_token(raw_token: str, default_generation: int) -> str | None:
+    token = (raw_token or "").strip()
+    if not token:
+        return None
+
+    lowered = token.lower()
+    if GEN_PATTERN.match(lowered):
+        return lowered
+
+    compact = _normalize_token(token)
+    if GEN_PATTERN.match(compact):
+        return compact
+
+    suffix = FORMAT_ALIASES.get(compact)
+    if suffix:
+        return f"gen{default_generation}{suffix}"
+    return None
+
+
+def _parse_formats_arg(args_formats: str, default_generation: int) -> tuple[list[str], list[str]]:
+    resolved: list[str] = []
+    unknown: list[str] = []
+
+    raw_tokens = [x.strip() for x in re.split(r"[,;\n]", args_formats or "") if x.strip()]
+    expanded_tokens: list[str] = []
+    for token in raw_tokens:
+        if "/" in token:
+            parts = [p.strip() for p in token.split("/") if p.strip()]
+            expanded_tokens.extend(parts)
+        else:
+            expanded_tokens.append(token)
+
+    for token in expanded_tokens:
+        fmt = _resolve_format_token(token, default_generation)
+        if fmt:
+            resolved.append(fmt)
+        else:
+            unknown.append(token)
+
+    return sorted(set(resolved)), unknown
+
+
+def _resolve_preset(preset: str | None, default_generation: int) -> list[str]:
+    if not preset:
+        return []
+
+    if preset in FORMAT_PRESETS:
+        if preset in {"core", "expanded"}:
+            suffixes = PRESET_CORE_SUFFIXES if preset == "core" else PRESET_EXPANDED_SUFFIXES
+            return [f"gen{default_generation}{suffix}" for suffix in suffixes]
+        return list(FORMAT_PRESETS[preset])
+
+    m = re.match(r"^gen([1-9])-(core|expanded)$", preset)
+    if m:
+        gen = int(m.group(1))
+        mode = m.group(2)
+        suffixes = PRESET_CORE_SUFFIXES if mode == "core" else PRESET_EXPANDED_SUFFIXES
+        return [f"gen{gen}{suffix}" for suffix in suffixes]
+
+    return []
+
+
+def _extract_index_formats(payload: Any) -> list[str]:
+    candidates: list[str] = []
+    if isinstance(payload, list):
+        candidates = [str(x) for x in payload]
+    elif isinstance(payload, dict):
+        if isinstance(payload.get("formats"), list):
+            candidates = [str(x) for x in payload["formats"]]
+        else:
+            candidates = [str(x) for x in payload.keys()]
+
+    valid: list[str] = []
+    for fmt in candidates:
+        normalized = str(fmt).strip().lower()
+        if normalized.endswith(".json"):
+            normalized = normalized[:-5]
+        if GEN_PATTERN.match(normalized):
+            valid.append(normalized)
+    return sorted(set(valid))
+
+
+def _fetch_index_formats() -> list[str]:
+    try:
+        payload = requests.get(INDEX_URL, timeout=30).json()
+        return _extract_index_formats(payload)
+    except Exception:
+        return []
+
+
+def _resolve_index_stage_preset(preset: str, index_formats: list[str]) -> list[str]:
+    key = (preset or "").strip().lower()
+    if key in {"stage1", "stage-1", "backbone", "backbone-all-gens"}:
+        return sorted(
+            fmt
+            for fmt in index_formats
+            if re.match(r"^gen[1-9]ou$", fmt) or re.match(r"^gen[1-9]vgc", fmt)
+        )
+
+    if key in {"stage2", "stage-2"}:
+        base = _resolve_index_stage_preset("stage1", index_formats)
+        extra = [
+            fmt
+            for fmt in index_formats
+            if re.match(r"^gen(8|9)(uu|ru|nu)$", fmt)
+        ]
+        return sorted(set(base + extra))
+
+    if key in {"stage3", "stage-3"}:
+        base = _resolve_index_stage_preset("stage2", index_formats)
+        extra = [
+            fmt
+            for fmt in index_formats
+            if re.match(r"^gen9nationaldex", fmt)
+        ]
+        return sorted(set(base + extra))
+
+    return []
 
 
 def ensure_schema_upgrade(db):
@@ -143,28 +455,37 @@ def infer_hidden_ability(db, pokemon_id: int, ability_name: str | None) -> bool:
     return False
 
 
-def resolve_format_ids(args_formats: str | None, from_index: bool) -> list[str]:
+def resolve_format_ids(
+    args_formats: str | None,
+    from_index: bool,
+    preset: str | None,
+    default_generation: int = 9,
+) -> tuple[list[str], list[str]]:
+    selected: list[str] = []
+    unknown: list[str] = []
+    index_formats: list[str] | None = None
+
+    if preset:
+        if preset.strip().lower() in INDEX_DRIVEN_STAGE_PRESETS:
+            index_formats = _fetch_index_formats()
+            selected.extend(_resolve_index_stage_preset(preset, index_formats))
+        else:
+            selected.extend(_resolve_preset(preset, default_generation))
+
     if args_formats:
-        return [x.strip() for x in args_formats.split(",") if x.strip()]
+        resolved, unresolved = _parse_formats_arg(args_formats, default_generation)
+        selected.extend(resolved)
+        unknown.extend(unresolved)
+
+    if selected:
+        return sorted(set(selected)), unknown
 
     if not from_index:
-        return ["gen9ou"]
+        return ["gen9ou"], unknown
 
-    payload = requests.get(INDEX_URL, timeout=30).json()
-    candidates = []
-    if isinstance(payload, list):
-        candidates = [str(x) for x in payload]
-    elif isinstance(payload, dict):
-        if isinstance(payload.get("formats"), list):
-            candidates = [str(x) for x in payload["formats"]]
-        else:
-            candidates = [str(x) for x in payload.keys()]
-
-    valid = []
-    for fmt in candidates:
-        if GEN_PATTERN.match(fmt.lower()):
-            valid.append(fmt.lower())
-    return sorted(set(valid))
+    if index_formats is None:
+        index_formats = _fetch_index_formats()
+    return index_formats, unknown
 
 
 def stream_download(url: str, target_file: str):
@@ -252,15 +573,39 @@ def stream_seed_format(db, format_id: str, local_path: str, source_url: str, pok
 
 def main():
     parser = argparse.ArgumentParser(description="Seed Smogon sets into smogon_builds table")
-    parser.add_argument("--formats", default=None, help="Comma-separated format IDs, ex: gen9ou,gen9monotype")
+    parser.add_argument(
+        "--generation",
+        type=int,
+        choices=list(range(1, 10)),
+        default=9,
+        help="Default generation used when formats are provided as aliases (ou,uu,bh,vgc...).",
+    )
+    parser.add_argument(
+        "--formats",
+        default=None,
+        help="Comma-separated format IDs or aliases, ex: gen9ou,gen9monotype,ou,1v1,vgc",
+    )
+    parser.add_argument(
+        "--preset",
+        default=None,
+        help="Named format preset, ex: core, expanded, gen9-core, gen6-expanded",
+    )
     parser.add_argument("--from-index", action="store_true", help="Load all available formats from index.json")
     parser.add_argument("--clean", action="store_true", help="Delete existing builds for selected formats before insert")
     args = parser.parse_args()
 
-    format_ids = resolve_format_ids(args.formats, args.from_index)
+    format_ids, unknown_tokens = resolve_format_ids(
+        args.formats,
+        args.from_index,
+        args.preset,
+        default_generation=args.generation,
+    )
     if not format_ids:
         print("No valid format IDs found.")
         return
+
+    if unknown_tokens:
+        print(f"Ignored unknown format tokens: {', '.join(unknown_tokens)}")
 
     Base.metadata.create_all(bind=engine)
 
