@@ -88,8 +88,8 @@ async def lifespan(app: FastAPI):
         global LAST_UPDATE_CHECK
         try:
             ensure_db_columns()
-            ensure_performance_indexes()
             check_and_update()
+            ensure_performance_indexes()
             sync_result = run_runtime_sync(reason="startup")
             logging.getLogger("auto_update").info(f"runtime sync (startup): {sync_result}")
             LAST_UPDATE_CHECK = datetime.datetime.utcnow().isoformat()
@@ -112,8 +112,8 @@ async def lifespan(app: FastAPI):
                     logger.info(f"Git pull result: {git_result}")
                 # Re-check DB for new Pokemon
                 ensure_db_columns()
-                ensure_performance_indexes()
                 check_and_update()
+                ensure_performance_indexes()
 
                 # Run full runtime sync only when pull fetched new commits.
                 pull_changed = bool(git_result) and ("already up to date" not in git_result.lower())
@@ -198,14 +198,33 @@ def ensure_performance_indexes():
         import sqlite3
 
         conn = sqlite3.connect(db_path)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_id ON smogon_builds (pokemon_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_generation ON smogon_builds (generation)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_format ON smogon_builds (format)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_format_name ON smogon_builds (format_name)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_slug ON smogon_builds (pokemon_slug)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_move_slug ON move (normalized_name)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_pm_lookup ON pokemon_moves (pokemon_id, move_id, is_egg_move)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_pml_lookup ON pokemon_move_learn (pokemon_id, move_id, learn_method, generation)")
+        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        existing_tables = {row[0] for row in cursor.fetchall()}
+
+        index_plan = {
+            "smogon_builds": [
+                "CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_id ON smogon_builds (pokemon_id)",
+                "CREATE INDEX IF NOT EXISTS idx_smogon_generation ON smogon_builds (generation)",
+                "CREATE INDEX IF NOT EXISTS idx_smogon_format ON smogon_builds (format)",
+                "CREATE INDEX IF NOT EXISTS idx_smogon_format_name ON smogon_builds (format_name)",
+                "CREATE INDEX IF NOT EXISTS idx_smogon_pokemon_slug ON smogon_builds (pokemon_slug)",
+            ],
+            "move": [
+                "CREATE INDEX IF NOT EXISTS idx_move_slug ON move (normalized_name)",
+            ],
+            "pokemon_moves": [
+                "CREATE INDEX IF NOT EXISTS idx_pm_lookup ON pokemon_moves (pokemon_id, move_id, is_egg_move)",
+            ],
+            "pokemon_move_learn": [
+                "CREATE INDEX IF NOT EXISTS idx_pml_lookup ON pokemon_move_learn (pokemon_id, move_id, learn_method, generation)",
+            ],
+        }
+
+        for table_name, statements in index_plan.items():
+            if table_name not in existing_tables:
+                continue
+            for sql in statements:
+                conn.execute(sql)
         conn.commit()
         conn.close()
     except Exception as e:
