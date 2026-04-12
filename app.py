@@ -13,13 +13,51 @@ project_root = os.path.dirname(os.path.abspath(__file__))
 if os.path.isdir(os.path.join(project_root, ".git")):
     print("==> Syncing code from GitHub...")
     try:
-        subprocess.run(["git", "fetch", "origin"], cwd=project_root, timeout=30)
-        reset_main = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=project_root, timeout=30)
+        fetch = subprocess.run(
+            ["git", "fetch", "origin"],
+            cwd=project_root,
+            timeout=30,
+            capture_output=True,
+            text=True,
+        )
+        if fetch.returncode != 0:
+            stderr = (fetch.stderr or "").strip()
+            raise RuntimeError(f"git fetch failed: {stderr}")
+
+        reset_main = subprocess.run(
+            ["git", "reset", "--hard", "origin/main"],
+            cwd=project_root,
+            timeout=30,
+            capture_output=True,
+            text=True,
+        )
         if reset_main.returncode != 0:
-            subprocess.run(["git", "reset", "--hard", "origin/master"], cwd=project_root, timeout=30)
-        print("==> Code synced successfully!")
+            reset_master = subprocess.run(
+                ["git", "reset", "--hard", "origin/master"],
+                cwd=project_root,
+                timeout=30,
+                capture_output=True,
+                text=True,
+            )
+            if reset_master.returncode != 0:
+                stderr_main = (reset_main.stderr or "").strip()
+                stderr_master = (reset_master.stderr or "").strip()
+                raise RuntimeError(
+                    f"git reset failed for origin/main and origin/master. "
+                    f"main_err={stderr_main} | master_err={stderr_master}"
+                )
+
+        head = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=project_root,
+            timeout=10,
+            capture_output=True,
+            text=True,
+        )
+        current_head = (head.stdout or "unknown").strip()
+        print(f"==> Code synced successfully! HEAD={current_head}")
     except Exception as e:
-        print(f"==> Git sync skipped: {e}")
+        print(f"==> Git sync failed. Running existing code. Reason: {e}")
 
 # Get port from environment variable (Pterodactyl sets SERVER_PORT or PORT)
 port = os.environ.get("SERVER_PORT") or os.environ.get("PORT") or "8000"
