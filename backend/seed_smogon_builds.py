@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover - fallback for minimal environments
 SMOGON_BASE = "https://pkmn.github.io/smogon/data/sets"
 INDEX_URL = f"{SMOGON_BASE}/index.json"
 STAT_KEYS = ["hp", "atk", "def", "spa", "spd", "spe"]
-GEN_PATTERN = re.compile(r"^gen([1-9])([a-z0-9-]+)$")
+GEN_PATTERN = re.compile(r"^gen([1-9])([a-z0-9-]*)$")
 
 PRESET_GEN9_CORE = [
     "gen9ou",
@@ -261,7 +261,8 @@ def parse_generation_and_format(format_id: str) -> tuple[str, str]:
     m = GEN_PATTERN.match((format_id or "").lower())
     if not m:
         return "unknown", format_id or "unknown"
-    return f"gen{m.group(1)}", m.group(2)
+    suffix = m.group(2) or "base"
+    return f"gen{m.group(1)}", suffix
 
 
 def _normalize_token(raw: str) -> str:

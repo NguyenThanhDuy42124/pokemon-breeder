@@ -116,6 +116,7 @@ Quy uoc format Smogon:
 - Mau ten chuan: `gen[the_he][ten_format][phien_ban neu co]`
 - Vi du: `gen9ou`, `gen8vgc2022`, `gen7randombattle`, `gen6vgc2016`
 - De lay day du danh sach song Gen1-Gen9: `--from-index` (doc tu `index.json`)
+- `--from-index` se quet toan bo key trong index (bao gom ca `gen1..gen9` va cac format chi tiet nhu `gen9ou`, `gen8vgc2022`...)
 
 Vi du seed nhanh:
 
