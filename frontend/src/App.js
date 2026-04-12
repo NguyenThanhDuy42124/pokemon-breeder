@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import ParentPanel from "./components/ParentPanel";
 import ResultsPanel from "./components/ResultsPanel";
 import TipsPanel from "./components/TipsPanel";
-import { calculateBreeding, getNatures, getServerStatus, getBreedingRoadmap, getSmogonSyncStatus } from "./api";
+import { calculateBreeding, getNatures, getServerStatus, getBreedingRoadmap } from "./api";
 import { useLanguage } from "./i18n";
 import "./App.css";
 
@@ -61,7 +61,6 @@ function App() {
   // Server restart detection: poll /api/server/status every 30s
   const [serverBanner, setServerBanner] = useState(null); // { type, message }
   const knownStartedAt = useRef(null);
-  const [smogonSync, setSmogonSync] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -103,26 +102,6 @@ function App() {
     const interval = setInterval(checkServer, 30000); // every 30s
     return () => { mounted = false; clearInterval(interval); };
   }, [lang]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadSyncStatus() {
-      try {
-        const payload = await getSmogonSyncStatus();
-        if (mounted) setSmogonSync(payload);
-      } catch {
-        if (mounted) setSmogonSync(null);
-      }
-    }
-
-    loadSyncStatus();
-    const interval = setInterval(loadSyncStatus, 30000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, []);
 
   async function handleCalculate() {
     if (!parentA.pokemonId || !parentB.pokemonId) {
@@ -241,47 +220,6 @@ function App() {
 
       {/* Main content */}
       <main className="app-main">
-        {smogonSync && (
-          <section className="admin-sync-card">
-            <div className="admin-sync-head">
-              <h3>Smogon Sync Status</h3>
-              <span className="admin-sync-meta">
-                {smogonSync.success_formats}/{smogonSync.total_formats} formats
-              </span>
-            </div>
-
-            <div className="admin-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((smogonSync.success_formats / Math.max(smogonSync.total_formats || 1, 1)) * 100)}>
-              <div
-                className="admin-progress-fill"
-                style={{ width: `${(smogonSync.success_formats / Math.max(smogonSync.total_formats || 1, 1)) * 100}%` }}
-              />
-            </div>
-
-            <div className="admin-sync-grid">
-              <span>Records: <b>{smogonSync.smogon_build_records}</b></span>
-              <span>Success: <b>{smogonSync.success_formats}</b></span>
-              <span>Pending: <b>{smogonSync.pending_formats}</b></span>
-              <span>Failed: <b>{smogonSync.failed_formats}</b></span>
-            </div>
-
-            {smogonSync.last_updated_at && (
-              <div className="admin-sync-updated">
-                Last update: {new Date(smogonSync.last_updated_at + "Z").toLocaleString()}
-              </div>
-            )}
-
-            {Array.isArray(smogonSync.by_generation) && smogonSync.by_generation.length > 0 && (
-              <div className="admin-sync-tags">
-                {smogonSync.by_generation.map((row) => (
-                  <span key={row.generation} className="admin-sync-tag">
-                    {row.generation}: {row.synced_formats}
-                  </span>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
         {/* Parent panels side by side */}
         <section className="parents-row">
           <ParentPanel
