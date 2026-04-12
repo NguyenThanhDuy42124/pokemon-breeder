@@ -319,35 +319,41 @@ export default function ParentPanel({ label, value, onChange, natures, lockedEgg
           <label>{t("sampleBuild")}</label>
           {hasSmogonMeta ? (
             <>
-              <label className="mini-label">{t("generationLabel")}</label>
-              <select
-                value={selectedGeneration}
-                onChange={(e) => {
-                  setSelectedGeneration(e.target.value);
-                  setSelectedFormatName("");
-                  setSelectedBuildId("");
-                }}
-              >
-                <option value="">{t("selectGeneration")}</option>
-                {generationOptions.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
+              <div className="smogon-top-row">
+                <div className="smogon-top-col">
+                  <label className="mini-label">{t("generationLabel")}</label>
+                  <select
+                    value={selectedGeneration}
+                    onChange={(e) => {
+                      setSelectedGeneration(e.target.value);
+                      setSelectedFormatName("");
+                      setSelectedBuildId("");
+                    }}
+                  >
+                    <option value="">{t("selectGeneration")}</option>
+                    {generationOptions.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <label className="mini-label">{t("formatLabel")}</label>
-              <select
-                value={selectedFormatName}
-                onChange={(e) => {
-                  setSelectedFormatName(e.target.value);
-                  setSelectedBuildId("");
-                }}
-                disabled={!selectedGeneration}
-              >
-                <option value="">{t("selectFormat")}</option>
-                {formatOptions.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
+                <div className="smogon-top-col">
+                  <label className="mini-label">{t("formatLabel")}</label>
+                  <select
+                    value={selectedFormatName}
+                    onChange={(e) => {
+                      setSelectedFormatName(e.target.value);
+                      setSelectedBuildId("");
+                    }}
+                    disabled={!selectedGeneration}
+                  >
+                    <option value="">{t("selectFormat")}</option>
+                    {formatOptions.map((f) => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
               <label className="mini-label">{t("sampleBuild")}</label>
               <select

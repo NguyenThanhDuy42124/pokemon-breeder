@@ -490,6 +490,16 @@ body {
   color: var(--text-muted);
 }
 
+.smogon-top-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.smogon-top-col {
+  min-width: 0;
+}
+
 /* ══════════════════════════════════════════════════════════
    Main Layout
    ══════════════════════════════════════════════════════════ */
@@ -2580,6 +2590,11 @@ body {
   .field select {
     font-size: 16px;
     padding: 0.6rem;
+  }
+
+  .smogon-top-row {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
   }
 
   .iv-grid {
