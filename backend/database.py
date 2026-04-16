@@ -18,7 +18,34 @@ from db_url_utils import normalize_database_url
 # SQLite database file lives next to this script
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pokemon_breeding.db")
 DEFAULT_SQLITE_URL = f"sqlite:///{DB_PATH}"
-DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL")) or DEFAULT_SQLITE_URL
+
+
+def _load_database_url_from_env_mysql() -> str | None:
+    """Load DATABASE_URL from project-level .env.mysql when env var is missing."""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env_file_path = os.path.join(project_root, ".env.mysql")
+    if not os.path.exists(env_file_path):
+        return None
+
+    try:
+        with open(env_file_path, "r", encoding="utf-8") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                if key.strip() != "DATABASE_URL":
+                    continue
+                cleaned = value.strip().strip('"').strip("'")
+                return cleaned or None
+    except Exception:
+        return None
+
+    return None
+
+
+raw_database_url = os.getenv("DATABASE_URL") or _load_database_url_from_env_mysql()
+DATABASE_URL = normalize_database_url(raw_database_url) or DEFAULT_SQLITE_URL
 
 is_sqlite = DATABASE_URL.startswith("sqlite://")
 
