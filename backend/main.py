@@ -33,7 +33,7 @@ import threading
 import datetime
 import subprocess
 import time
-from database import SessionLocal, engine, is_sqlite
+from database import SessionLocal, engine, is_sqlite, get_database_runtime_info
 from models import Pokemon, EggGroup, Nature, Ability, SmogonBuild, CrawlHistory, pokemon_ability
 from seed_smogon_builds import resolve_format_ids
 from schemas import (
@@ -86,6 +86,11 @@ async def lifespan(app: FastAPI):
     """Run auto-update check on startup and schedule periodic updates."""
     global LAST_UPDATE_CHECK, LAST_GIT_PULL
     stop_event = threading.Event()
+
+    db_info = get_database_runtime_info()
+    logging.getLogger("startup").info(
+        f"Active database: {db_info['engine']} | name={db_info['name']}"
+    )
 
     def run_initial_update():
         global LAST_UPDATE_CHECK

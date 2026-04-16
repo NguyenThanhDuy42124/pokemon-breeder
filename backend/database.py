@@ -11,6 +11,7 @@ HOW IT WORKS (for beginners):
 
 import os
 from sqlalchemy import create_engine, event
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker, declarative_base
 from db_url_utils import normalize_database_url
 
@@ -20,6 +21,39 @@ DEFAULT_SQLITE_URL = f"sqlite:///{DB_PATH}"
 DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL")) or DEFAULT_SQLITE_URL
 
 is_sqlite = DATABASE_URL.startswith("sqlite://")
+
+
+def get_database_runtime_info() -> dict[str, str]:
+    """Return safe DB runtime details for startup logs."""
+    try:
+        url = make_url(DATABASE_URL)
+        backend = (url.get_backend_name() or "unknown").lower()
+
+        if backend == "mysql":
+            return {
+                "engine": "MySQL",
+                "name": url.database or "unknown",
+            }
+
+        if backend == "sqlite":
+            if url.database in (None, "", ":memory:"):
+                db_name = ":memory:"
+            else:
+                db_name = os.path.basename(url.database)
+            return {
+                "engine": "SQLite",
+                "name": db_name,
+            }
+
+        return {
+            "engine": backend.upper(),
+            "name": url.database or "unknown",
+        }
+    except Exception:
+        return {
+            "engine": "UNKNOWN",
+            "name": "unknown",
+        }
 
 connect_args = {}
 if is_sqlite:
