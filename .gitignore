@@ -11,3 +11,19 @@ dist/
 .idea/
 .vscode/
 *.log
+
+# Local DB runtime artifacts
+backend/pokemon_breeding.db-shm
+backend/pokemon_breeding.db-wal
+
+# Local-only environment and planning files
+.env.mysql
+.agents/
+OWNER_AI_CONTEXT.md
+findings.md
+progress.md
+task_plan.md
+skills-lock.json
+
+# Raw Smogon downloaded files (local cache)
+backend/data/
